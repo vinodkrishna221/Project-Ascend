@@ -1,0 +1,36 @@
+# GitHub Repository Setup Instructions
+
+## Option 1: Manual Setup (Recommended)
+
+1. Go to https://github.com and sign in
+2. Click "+" → "New repository"
+3. Repository name: ascend-student-social-network
+4. Description: A dedicated social network designed exclusively for students - share academic journey, showcase projects, and build meaningful cross-college connections
+5. Make it Public
+6. DO NOT initialize with README, .gitignore, or license (we already have these)
+7. Click "Create repository"
+
+Then run these commands (replace 'yourusername' with your GitHub username):
+
+git remote add origin https://github.com/yourusername/ascend-student-social-network.git
+git branch -M main
+git push -u origin main
+
+## Option 2: Using GitHub CLI (After restarting terminal)
+
+# Restart your terminal/PowerShell first, then run:
+gh auth login
+gh repo create ascend-student-social-network --public --description "A dedicated social network designed exclusively for students - share academic journey, showcase projects, and build meaningful cross-college connections"
+git remote add origin https://github.com/yourusername/ascend-student-social-network.git
+git branch -M main
+git push -u origin main
+
+## Verify Setup
+git remote -v
+
+## Repository Features to Enable (Optional)
+After creating the repository, you can enable:
+- Issues (for bug reports and feature requests)
+- Discussions (for community conversations)
+- Wiki (for additional documentation)
+- Projects (for project management)
