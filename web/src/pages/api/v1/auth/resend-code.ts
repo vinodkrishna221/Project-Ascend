@@ -4,8 +4,8 @@ import { EmailVerificationRequest } from '../../../../lib/auth.types'
 import { validateEmail } from '../../../../lib/validation'
 
 /**
- * POST /api/v1/auth/verify-email
- * Initiate email verification by sending a verification code
+ * POST /api/v1/auth/resend-code
+ * Resend verification code with rate limiting
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -58,9 +58,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                      req.socket.remoteAddress
     const userAgent = req.headers['user-agent']
 
-    // Check current verification status
-    const verificationStatus = await EmailVerificationService.getVerificationStatus(email)
+    // Check rate limiting first
+    const rateLimitCheck = await EmailVerificationService.canRequestNewCode(email)
     
+    if (!rateLimitCheck.canRequest) {
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: rateLimitCheck.error || 'Rate limit exceeded',
+          details: {
+            wait_time_seconds: rateLimitCheck.waitTime,
+            retry_after: rateLimitCheck.waitTime
+          }
+        }
+      })
+    }
+
+    // Get current verification status
+    const verificationStatus = await EmailVerificationService.getVerificationStatus(email)
+
+    // Initiate new verification
     const result = await AuthService.initiateEmailVerification(
       { email }, 
       ipAddress, 
@@ -70,12 +88,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!result.success) {
       // Determine appropriate HTTP status code based on error type
       let statusCode = 400
-      let errorCode = 'EMAIL_VERIFICATION_FAILED'
+      let errorCode = 'RESEND_FAILED'
 
-      if (result.error?.includes('Rate limit') || result.error?.includes('wait')) {
-        statusCode = 429
-        errorCode = 'RATE_LIMIT_EXCEEDED'
-      } else if (result.error?.includes('Domain not found')) {
+      if (result.error?.includes('Domain not found')) {
         statusCode = 400
         errorCode = 'UNSUPPORTED_DOMAIN'
       } else if (result.error?.includes('inactive')) {
@@ -87,7 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         success: false,
         error: {
           code: errorCode,
-          message: result.error || 'Email verification failed'
+          message: result.error || 'Failed to resend verification code'
         }
       })
     }
@@ -95,24 +110,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       success: true,
       data: {
-        message: result.message,
+        message: 'Verification code resent successfully',
         verification_status: {
           has_active_code: true,
-          expires_in_minutes: 15
+          expires_in_minutes: 15,
+          previous_code_invalidated: verificationStatus.hasActiveCode
         }
       },
       meta: {
         timestamp: new Date().toISOString(),
-        email_domain: email.split('@')[1]
+        email_domain: email.split('@')[1],
+        action: 'resend'
       }
     })
   } catch (error) {
-    console.error('Email verification API error:', error)
+    console.error('Resend code API error:', error)
     return res.status(500).json({
       success: false,
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Email verification service temporarily unavailable'
+        message: 'Resend service temporarily unavailable'
       }
     })
   }

@@ -1,9 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { AuthService } from '../../../../lib/auth.service'
+import { AuthService, EmailVerificationService } from '../../../../lib/auth.service'
 import { VerifyCodeRequest } from '../../../../lib/auth.types'
+import { validateEmail } from '../../../../lib/validation'
 
+/**
+ * POST /api/v1/auth/verify-code
+ * Verify email verification code and create user account
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST'])
     return res.status(405).json({
       success: false,
       error: {
@@ -17,59 +23,141 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { email, code }: VerifyCodeRequest = req.body
 
     // Validate input
-    if (!email || typeof email !== 'string' || !code || typeof code !== 'string') {
+    if (!email || typeof email !== 'string') {
       return res.status(400).json({
         success: false,
         error: {
-          code: 'INVALID_INPUT',
-          message: 'Valid email and code are required'
+          code: 'VALIDATION_ERROR',
+          message: 'Valid email is required',
+          details: {
+            field: 'email',
+            constraint: 'required'
+          }
+        }
+      })
+    }
+
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Valid verification code is required',
+          details: {
+            field: 'code',
+            constraint: 'required'
+          }
         }
       })
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
+    if (!validateEmail(email)) {
       return res.status(400).json({
         success: false,
         error: {
-          code: 'INVALID_EMAIL_FORMAT',
-          message: 'Please provide a valid email address'
+          code: 'VALIDATION_ERROR',
+          message: 'Please provide a valid email address',
+          details: {
+            field: 'email',
+            constraint: 'valid_email_format'
+          }
         }
       })
     }
 
-    // Validate code format (should be 6 characters)
-    if (code.length !== 6) {
+    // Validate code format (should be 6 digits)
+    if (!/^\d{6}$/.test(code)) {
       return res.status(400).json({
         success: false,
         error: {
-          code: 'INVALID_CODE_FORMAT',
-          message: 'Verification code must be 6 characters'
+          code: 'VALIDATION_ERROR',
+          message: 'Verification code must be 6 digits',
+          details: {
+            field: 'code',
+            constraint: 'six_digit_format'
+          }
         }
       })
     }
 
-    const result = await AuthService.verifyEmailCode({ email, code })
+    // Get client IP and user agent for security tracking
+    const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress
+    const userAgent = req.headers['user-agent']
+
+    const result = await AuthService.verifyEmailCode(
+      { email, code }, 
+      ipAddress, 
+      userAgent
+    )
 
     if (!result.success) {
-      return res.status(400).json({
+      // Determine appropriate HTTP status code and error details
+      let statusCode = 400
+      let errorCode = 'CODE_VERIFICATION_FAILED'
+      let errorDetails: any = undefined
+
+      if (result.error?.includes('expired')) {
+        errorCode = 'CODE_EXPIRED'
+        errorDetails = {
+          action: 'request_new_code',
+          message: 'Please request a new verification code'
+        }
+      } else if (result.error?.includes('attempts')) {
+        statusCode = 429
+        errorCode = 'MAX_ATTEMPTS_EXCEEDED'
+        errorDetails = {
+          action: 'request_new_code',
+          message: 'Please request a new verification code'
+        }
+      } else if (result.error?.includes('Invalid')) {
+        errorCode = 'INVALID_CODE'
+        // Try to get attempts remaining info
+        const status = await EmailVerificationService.getVerificationStatus(email)
+        if (status.attemptsRemaining !== undefined) {
+          errorDetails = {
+            attempts_remaining: status.attemptsRemaining,
+            message: `${status.attemptsRemaining} attempts remaining`
+          }
+        }
+      } else if (result.error?.includes('No active')) {
+        errorCode = 'NO_ACTIVE_CODE'
+        errorDetails = {
+          action: 'request_new_code',
+          message: 'Please request a new verification code'
+        }
+      }
+
+      return res.status(statusCode).json({
         success: false,
         error: {
-          code: 'CODE_VERIFICATION_FAILED',
-          message: result.error || 'Code verification failed'
+          code: errorCode,
+          message: result.error || 'Code verification failed',
+          details: errorDetails
         }
       })
     }
 
+    // Successful verification
     return res.status(200).json({
       success: true,
       data: {
-        user: result.user,
+        user: {
+          id: result.user!.id,
+          email: result.user!.email,
+          name: result.user!.name,
+          role: result.user!.role,
+          verification_status: result.user!.verification_status,
+          verification_method: result.user!.verification_method
+        },
         tokens: result.tokens
       },
       meta: {
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        verification_method: 'email',
+        account_created: true
       }
     })
   } catch (error) {
@@ -78,7 +166,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: false,
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Internal server error'
+        message: 'Code verification service temporarily unavailable'
       }
     })
   }

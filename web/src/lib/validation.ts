@@ -147,6 +147,12 @@ export function isEducationalDomain(domain: string): boolean {
          educationalKeywords.some(keyword => domain.includes(keyword))
 }
 
+// Simple email validation function
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
 // Rate limiting validation
 export const rateLimitSchema = z.object({
   ip: z.string().ip(),

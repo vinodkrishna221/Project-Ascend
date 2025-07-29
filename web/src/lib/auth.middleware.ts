@@ -119,3 +119,31 @@ export function withOptionalAuth(handler: (req: AuthenticatedRequest, res: NextA
     }
   }
 }
+
+/**
+ * Combined authentication middleware with options
+ */
+export function authMiddleware(
+  handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void>,
+  options: {
+    requiredRole?: UserRole;
+    requireVerification?: boolean;
+    optional?: boolean;
+  } = {}
+) {
+  if (options.optional) {
+    return withOptionalAuth(handler)
+  }
+
+  let middleware = withAuth(handler)
+
+  if (options.requireVerification) {
+    middleware = withVerification(handler)
+  }
+
+  if (options.requiredRole) {
+    middleware = withRole([options.requiredRole])(handler)
+  }
+
+  return middleware
+}

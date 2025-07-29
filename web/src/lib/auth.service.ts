@@ -23,6 +23,8 @@ import {
   EmailVerification,
   VALIDATION_CONSTANTS
 } from './auth.types'
+import { DomainValidationService } from './domain-validation.service'
+import { EmailVerificationCodeService, EmailSendingService } from './email-verification.service'
 
 /**
  * Email domain validation service
@@ -32,84 +34,45 @@ export class EmailVerificationService {
    * Validate if email domain is from an approved college
    */
   static async validateDomain(email: string): Promise<DomainValidationResult> {
-    try {
-      const domain = email.split('@')[1]?.toLowerCase()
-      
-      if (!domain) {
-        return {
-          isValid: false,
-          requiresManualReview: false,
-          reason: 'Invalid email format'
-        }
-      }
-
-      const { data: collegeDomain, error } = await supabase
-        .from('college_domains')
-        .select('*')
-        .eq('domain', domain)
-        .eq('is_active', true)
-        .single()
-
-      if (error || !collegeDomain) {
-        return {
-          isValid: false,
-          requiresManualReview: true,
-          reason: 'Domain not found in approved college list'
-        }
-      }
-
-      return {
-        isValid: true,
-        college: collegeDomain,
-        requiresManualReview: collegeDomain.manual_review_required
-      }
-    } catch (error) {
-      console.error('Domain validation error:', error)
-      return {
-        isValid: false,
-        requiresManualReview: false,
-        reason: 'Domain validation failed'
-      }
-    }
+    return DomainValidationService.validateDomain(email)
   }
 
   /**
    * Generate a random verification code
    */
   static generateVerificationCode(): string {
-    return Math.random()
-      .toString(36)
-      .substring(2, 2 + VALIDATION_CONSTANTS.EMAIL_VERIFICATION_CODE_LENGTH)
-      .toUpperCase()
+    return EmailVerificationCodeService.generateVerificationCode()
   }
 
   /**
    * Send verification code to email
    */
-  static async sendVerificationCode(email: string, code: string): Promise<{ success: boolean; error?: string }> {
+  static async sendVerificationCode(
+    email: string, 
+    code: string, 
+    collegeName?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       // Store verification code in database
-      const expiresAt = new Date()
-      expiresAt.setMinutes(expiresAt.getMinutes() + VALIDATION_CONSTANTS.EMAIL_VERIFICATION_EXPIRY_MINUTES)
+      const storeResult = await EmailVerificationCodeService.storeVerificationCode(
+        email, 
+        code, 
+        ipAddress, 
+        userAgent
+      )
 
-      const { error } = await supabaseAdmin
-        .from('email_verifications')
-        .insert({
-          email,
-          code,
-          expires_at: expiresAt.toISOString(),
-          attempts: 0,
-          max_attempts: VALIDATION_CONSTANTS.MAX_VERIFICATION_ATTEMPTS
-        })
-
-      if (error) {
-        console.error('Error storing verification code:', error)
-        return { success: false, error: 'Failed to store verification code' }
+      if (!storeResult.success) {
+        return storeResult
       }
 
-      // TODO: Integrate with email service (SendGrid, AWS SES, etc.)
-      // For now, we'll just log the code for development
-      console.log(`Verification code for ${email}: ${code}`)
+      // Send email
+      const sendResult = await EmailSendingService.sendVerificationCode(email, code, collegeName)
+      
+      if (!sendResult.success) {
+        return sendResult
+      }
 
       return { success: true }
     } catch (error) {
@@ -121,59 +84,44 @@ export class EmailVerificationService {
   /**
    * Validate verification code
    */
-  static async validateCode(email: string, code: string): Promise<{ valid: boolean; error?: string }> {
-    try {
-      const { data: verification, error } = await supabaseAdmin
-        .from('email_verifications')
-        .select('*')
-        .eq('email', email)
-        .eq('code', code)
-        .is('verified_at', null)
-        .single()
+  static async validateCode(
+    email: string, 
+    code: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<{ valid: boolean; error?: string; attemptsRemaining?: number }> {
+    return EmailVerificationCodeService.validateCode(email, code, ipAddress, userAgent)
+  }
 
-      if (error || !verification) {
-        return { valid: false, error: 'Invalid verification code' }
-      }
+  /**
+   * Check if email can request new verification code
+   */
+  static async canRequestNewCode(email: string): Promise<{
+    canRequest: boolean;
+    error?: string;
+    waitTime?: number;
+  }> {
+    return EmailVerificationCodeService.canRequestNewCode(email)
+  }
 
-      // Check if code has expired
-      if (new Date() > new Date(verification.expires_at)) {
-        return { valid: false, error: 'Verification code has expired' }
-      }
-
-      // Check if max attempts exceeded
-      if (verification.attempts >= verification.max_attempts) {
-        return { valid: false, error: 'Maximum verification attempts exceeded' }
-      }
-
-      // Mark as verified
-      await supabaseAdmin
-        .from('email_verifications')
-        .update({ 
-          verified_at: new Date().toISOString(),
-          attempts: verification.attempts + 1
-        })
-        .eq('id', verification.id)
-
-      return { valid: true }
-    } catch (error) {
-      console.error('Code validation error:', error)
-      return { valid: false, error: 'Code validation failed' }
-    }
+  /**
+   * Get verification status for an email
+   */
+  static async getVerificationStatus(email: string): Promise<{
+    hasActiveCode: boolean;
+    attemptsRemaining?: number;
+    expiresAt?: string;
+    isExpired?: boolean;
+    isLocked?: boolean;
+  }> {
+    return EmailVerificationCodeService.getVerificationStatus(email)
   }
 
   /**
    * Clean up expired verification codes
    */
   static async cleanupExpiredCodes(): Promise<number> {
-    try {
-      const { data } = await supabaseAdmin
-        .rpc('cleanup_expired_email_verifications')
-
-      return data || 0
-    } catch (error) {
-      console.error('Cleanup expired codes error:', error)
-      return 0
-    }
+    return EmailVerificationCodeService.cleanupExpiredCodes()
   }
 }
 
@@ -415,8 +363,23 @@ export class AuthService {
   /**
    * Initiate email verification
    */
-  static async initiateEmailVerification(request: EmailVerificationRequest): Promise<EmailVerificationResponse> {
+  static async initiateEmailVerification(
+    request: EmailVerificationRequest,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<EmailVerificationResponse> {
     try {
+      // Check rate limiting
+      const rateLimitCheck = await EmailVerificationService.canRequestNewCode(request.email)
+      
+      if (!rateLimitCheck.canRequest) {
+        return {
+          success: false,
+          message: rateLimitCheck.error || 'Rate limit exceeded',
+          error: rateLimitCheck.error
+        }
+      }
+
       // Validate domain
       const domainValidation = await EmailVerificationService.validateDomain(request.email)
       
@@ -430,7 +393,13 @@ export class AuthService {
 
       // Generate and send verification code
       const code = EmailVerificationService.generateVerificationCode()
-      const sendResult = await EmailVerificationService.sendVerificationCode(request.email, code)
+      const sendResult = await EmailVerificationService.sendVerificationCode(
+        request.email, 
+        code, 
+        domainValidation.college?.college_name,
+        ipAddress,
+        userAgent
+      )
 
       if (!sendResult.success) {
         return {
@@ -457,10 +426,19 @@ export class AuthService {
   /**
    * Verify email code and create account
    */
-  static async verifyEmailCode(request: VerifyCodeRequest): Promise<VerifyCodeResponse> {
+  static async verifyEmailCode(
+    request: VerifyCodeRequest,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<VerifyCodeResponse> {
     try {
       // Validate code
-      const codeValidation = await EmailVerificationService.validateCode(request.email, request.code)
+      const codeValidation = await EmailVerificationService.validateCode(
+        request.email, 
+        request.code,
+        ipAddress,
+        userAgent
+      )
       
       if (!codeValidation.valid) {
         return {
@@ -511,6 +489,13 @@ export class AuthService {
       
       // Store refresh token
       await SessionService.storeRefreshToken(user.id, tokens.refresh_token)
+
+      // Send welcome email
+      await EmailSendingService.sendWelcomeEmail(
+        user.email!,
+        user.name,
+        domainValidation.college.college_name
+      )
 
       return {
         success: true,
