@@ -101,6 +101,50 @@ export type Database = {
           }
         ]
       }
+      college_admins: {
+        Row: {
+          id: string
+          college_id: string
+          admin_email: string
+          admin_name: string
+          permissions: Json
+          is_active: boolean
+          created_at: string
+          created_by: string | null
+          last_login: string | null
+        }
+        Insert: {
+          id?: string
+          college_id: string
+          admin_email: string
+          admin_name: string
+          permissions?: Json
+          is_active?: boolean
+          created_at?: string
+          created_by?: string | null
+          last_login?: string | null
+        }
+        Update: {
+          id?: string
+          college_id?: string
+          admin_email?: string
+          admin_name?: string
+          permissions?: Json
+          is_active?: boolean
+          created_at?: string
+          created_by?: string | null
+          last_login?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "college_admins_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       college_student_database: {
         Row: {
           id: string
@@ -148,6 +192,56 @@ export type Database = {
           {
             foreignKeyName: "college_student_database_used_by_fkey"
             columns: ["used_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      college_student_uploads: {
+        Row: {
+          id: string
+          college_id: string
+          uploaded_by: string
+          filename: string
+          total_records: number
+          successful_records: number
+          failed_records: number
+          status: string
+          error_details: Json | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          college_id: string
+          uploaded_by: string
+          filename: string
+          total_records: number
+          successful_records?: number
+          failed_records?: number
+          status?: string
+          error_details?: Json | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          college_id?: string
+          uploaded_by?: string
+          filename?: string
+          total_records?: number
+          successful_records?: number
+          failed_records?: number
+          status?: string
+          error_details?: Json | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "college_student_uploads_uploaded_by_fkey"
+            columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -317,6 +411,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bulk_insert_college_students: {
+        Args: {
+          p_college_id: string
+          p_students: Json
+          p_uploaded_by: string
+        }
+        Returns: string
+      }
       cleanup_expired_email_verifications: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -333,6 +435,25 @@ export type Database = {
           p_success?: boolean
         }
         Returns: undefined
+      }
+      get_college_verification_analytics: {
+        Args: {
+          p_college_id: string
+        }
+        Returns: Json
+      }
+      hash_college_password: {
+        Args: {
+          password: string
+        }
+        Returns: string
+      }
+      verify_college_password: {
+        Args: {
+          password: string
+          hash: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

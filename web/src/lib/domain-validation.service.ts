@@ -490,12 +490,14 @@ export class DomainValidationService {
       }
 
       // TODO: Send notification to admins about new domain request
-      console.log('New domain request:', {
-        domain: domainRequest.domain,
-        college: domainRequest.college_name,
-        requester: domainRequest.requester_email,
-        info: domainRequest.additional_info
-      })
+      if (process.env.NODE_ENV === 'development') {
+        console.log('New domain request:', {
+          domain: domainRequest.domain,
+          college: domainRequest.college_name,
+          requester: domainRequest.requester_email,
+          info: domainRequest.additional_info
+        })
+      }
 
       return { success: true }
     } catch (error) {

@@ -2,29 +2,24 @@ import { supabase, supabaseAdmin } from './supabase'
 import * as bcrypt from 'bcryptjs'
 import * as jwt from 'jsonwebtoken'
 import {
-  SignupRequest,
-  SignupResponse,
   EmailVerificationRequest,
   EmailVerificationResponse,
   VerifyCodeRequest,
   VerifyCodeResponse,
   CollegeCredentialsRequest,
   CollegeCredentialsResponse,
-  LoginRequest,
-  LoginResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
   DomainValidationResult,
   CollegeVerificationResult,
   SessionValidation,
   Profile,
-  CollegeDomain,
   CollegeStudentRecord,
-  EmailVerification,
   VALIDATION_CONSTANTS
 } from './auth.types'
 import { DomainValidationService } from './domain-validation.service'
 import { EmailVerificationCodeService, EmailSendingService } from './email-verification.service'
+import { CollegeDatabaseVerificationService } from './college-database-verification.service'
 
 /**
  * Email domain validation service
@@ -463,8 +458,8 @@ export class AuthService {
       
       const profileData: any = {
         id: userId,
-        email: request.email,
-        name: request.email.split('@')[0], // Temporary name
+        email: request.email.toLowerCase().trim(),
+        name: request.email.split('@')[0].trim(), // Temporary name
         verification_status: 'verified',
         verification_method: 'email',
         role: 'student' // Default role
@@ -516,10 +511,26 @@ export class AuthService {
    */
   static async verifyCollegeCredentials(request: CollegeCredentialsRequest): Promise<CollegeCredentialsResponse> {
     try {
-      // Verify credentials
-      const verification = await CollegeDBVerificationService.verifyStudentCredentials(request)
+      // Validate credential format
+      const formatValidation = CollegeDatabaseVerificationService.validateCredentialFormat(request)
+      if (!formatValidation.valid) {
+        return {
+          success: false,
+          error: formatValidation.errors.join(', ')
+        }
+      }
+
+      // Verify credentials using the new service
+      const verification = await CollegeDatabaseVerificationService.verifyCredentials(request)
       
-      if (!verification.verified || !verification.student_record) {
+      if (!verification.success) {
+        // Log verification attempt for audit
+        await CollegeDatabaseVerificationService.logVerificationAttempt(
+          request,
+          false,
+          verification.error_code
+        )
+        
         return {
           success: false,
           error: verification.error
@@ -531,11 +542,11 @@ export class AuthService {
       
       const profileData: any = {
         id: userId,
-        name: request.student_name,
+        name: request.student_name.trim(),
         verification_status: 'verified',
         verification_method: 'college_database',
         role: 'student',
-        college_database_id: verification.student_record.id,
+        college_database_id: verification.student_id,
         college_id: request.college_id
       }
 
@@ -554,7 +565,21 @@ export class AuthService {
       }
 
       // Mark credentials as used
-      await CollegeDBVerificationService.markCredentialsAsUsed(verification.student_record.id, user.id)
+      const markResult = await CollegeDatabaseVerificationService.markCredentialsAsUsed(
+        verification.student_id!,
+        user.id
+      )
+
+      if (!markResult.success) {
+        console.error('Failed to mark credentials as used:', markResult.error)
+        // Continue anyway as user is already created
+      }
+
+      // Log successful verification
+      await CollegeDatabaseVerificationService.logVerificationAttempt(
+        request,
+        true
+      )
 
       // Generate tokens
       const tokens = SessionService.generateTokens(user)
@@ -569,6 +594,14 @@ export class AuthService {
       }
     } catch (error) {
       console.error('Verify college credentials error:', error)
+      
+      // Log failed verification attempt
+      await CollegeDatabaseVerificationService.logVerificationAttempt(
+        request,
+        false,
+        'INTERNAL_ERROR'
+      )
+      
       return {
         success: false,
         error: 'College verification failed'

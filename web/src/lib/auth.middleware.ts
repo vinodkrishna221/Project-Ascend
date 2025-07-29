@@ -147,3 +147,52 @@ export function authMiddleware(
 
   return middleware
 }
+
+/**
+ * AuthMiddleware class with static methods for convenience
+ */
+export class AuthMiddleware {
+  /**
+   * Require authentication
+   */
+  static requireAuth(handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void>) {
+    return withAuth(handler)
+  }
+
+  /**
+   * Require platform admin role
+   */
+  static requirePlatformAdmin(handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void>) {
+    return withRole(['platform_admin'])(handler)
+  }
+
+  /**
+   * Require guild admin role
+   */
+  static requireGuildAdmin(handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void>) {
+    return withRole(['guild_admin', 'platform_admin'])(handler)
+  }
+
+  /**
+   * Require verified user
+   */
+  static requireVerified(handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void>) {
+    return withVerification(handler)
+  }
+
+  /**
+   * Optional authentication
+   */
+  static optional(handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void>) {
+    return withOptionalAuth(handler)
+  }
+
+  /**
+   * Require specific role
+   */
+  static requireRole(roles: UserRole[]) {
+    return (handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void>) => {
+      return withRole(roles)(handler)
+    }
+  }
+}
