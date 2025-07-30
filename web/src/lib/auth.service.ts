@@ -20,6 +20,7 @@ import {
 import { DomainValidationService } from './domain-validation.service'
 import { EmailVerificationCodeService, EmailSendingService } from './email-verification.service'
 import { CollegeDatabaseVerificationService } from './college-database-verification.service'
+import { jwtTokenService } from './jwt-token.service'
 
 /**
  * Email domain validation service
@@ -230,29 +231,18 @@ export class CollegeDBVerificationService {
  */
 export class SessionService {
   /**
-   * Generate JWT tokens
+   * Generate JWT tokens using the new JWT token service
    */
-  static generateTokens(user: Profile): { access_token: string; refresh_token: string } {
-    const jwtSecret = process.env.JWT_SECRET!
-
-    const accessToken = jwt.sign(
-      {
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-        verification_status: user.verification_status
-      },
-      jwtSecret,
-      { expiresIn: `${VALIDATION_CONSTANTS.ACCESS_TOKEN_EXPIRY_HOURS}h` }
-    )
-
-    const refreshToken = jwt.sign(
-      { sub: user.id },
-      jwtSecret,
-      { expiresIn: `${VALIDATION_CONSTANTS.SESSION_EXPIRY_DAYS}d` }
-    )
-
-    return { access_token: accessToken, refresh_token: refreshToken }
+  static async generateTokens(
+    user: Profile, 
+    deviceInfo?: { userAgent?: string; ipAddress?: string }
+  ): Promise<{ access_token: string; refresh_token: string }> {
+    const tokens = await jwtTokenService.createSession(user.id, deviceInfo)
+    
+    return {
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken
+    }
   }
 
   /**
@@ -281,70 +271,30 @@ export class SessionService {
   }
 
   /**
-   * Store refresh token
+   * @deprecated Use jwtTokenService.createSession() instead
+   * Store refresh token - Legacy method, will be removed
    */
-  static async storeRefreshToken(userId: string, refreshToken: string, deviceInfo?: any): Promise<void> {
-    try {
-      const tokenHash = await bcrypt.hash(refreshToken, 10)
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + VALIDATION_CONSTANTS.SESSION_EXPIRY_DAYS)
-
-      await supabaseAdmin
-        .from('user_sessions')
-        .insert({
-          user_id: userId,
-          refresh_token_hash: tokenHash,
-          device_info: deviceInfo,
-          expires_at: expiresAt.toISOString()
-        })
-    } catch (error) {
-      console.error('Store refresh token error:', error)
-    }
+  static async storeRefreshToken(_userId: string, _refreshToken: string, _deviceInfo?: any): Promise<void> {
+    // This method is deprecated - JWT token service handles session storage automatically
+    console.warn('storeRefreshToken is deprecated - JWT token service handles this automatically')
   }
 
   /**
-   * Validate refresh token
+   * @deprecated Use jwtTokenService.validateSession() instead
+   * Validate refresh token - Legacy method, will be removed
    */
-  static async validateRefreshToken(refreshToken: string): Promise<{ valid: boolean; userId?: string }> {
-    try {
-      const jwtSecret = process.env.JWT_SECRET!
-      const decoded = jwt.verify(refreshToken, jwtSecret) as any
-
-      const { data: sessions, error } = await supabaseAdmin
-        .from('user_sessions')
-        .select('*')
-        .eq('user_id', decoded.sub)
-        .eq('is_active', true)
-        .gt('expires_at', new Date().toISOString())
-
-      if (error || !sessions || sessions.length === 0) {
-        return { valid: false }
-      }
-
-      // Check if any session matches the token hash
-      for (const session of sessions) {
-        const isValid = await bcrypt.compare(refreshToken, session.refresh_token_hash)
-        if (isValid) {
-          return { valid: true, userId: session.user_id }
-        }
-      }
-
-      return { valid: false }
-    } catch (error) {
-      console.error('Refresh token validation error:', error)
-      return { valid: false }
-    }
+  static async validateRefreshToken(_refreshToken: string): Promise<{ valid: boolean; userId?: string }> {
+    // This method is deprecated - use JWT token service instead
+    console.warn('validateRefreshToken is deprecated - use jwtTokenService.validateSession() instead')
+    return { valid: false }
   }
 
   /**
-   * Revoke all user sessions
+   * Revoke all user sessions using JWT token service
    */
   static async revokeAllUserSessions(userId: string): Promise<void> {
     try {
-      await supabaseAdmin
-        .from('user_sessions')
-        .update({ is_active: false })
-        .eq('user_id', userId)
+      await jwtTokenService.revokeAllUserSessions(userId)
     } catch (error) {
       console.error('Revoke all sessions error:', error)
     }
@@ -479,11 +429,8 @@ export class AuthService {
         }
       }
 
-      // Generate tokens
-      const tokens = SessionService.generateTokens(user)
-      
-      // Store refresh token
-      await SessionService.storeRefreshToken(user.id, tokens.refresh_token)
+      // Generate tokens using JWT token service
+      const tokens = await SessionService.generateTokens(user)
 
       // Send welcome email
       await EmailSendingService.sendWelcomeEmail(
@@ -581,11 +528,8 @@ export class AuthService {
         true
       )
 
-      // Generate tokens
-      const tokens = SessionService.generateTokens(user)
-      
-      // Store refresh token
-      await SessionService.storeRefreshToken(user.id, tokens.refresh_token)
+      // Generate tokens using JWT token service
+      const tokens = await SessionService.generateTokens(user)
 
       return {
         success: true,
@@ -610,49 +554,25 @@ export class AuthService {
   }
 
   /**
-   * Refresh access token
+   * Refresh access token using JWT token service
    */
   static async refreshToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse> {
     try {
-      // Validate refresh token
-      const validation = await SessionService.validateRefreshToken(request.refresh_token)
-      
-      if (!validation.valid || !validation.userId) {
-        return {
-          success: false,
-          error: 'Invalid refresh token'
-        }
-      }
-
-      // Get user profile
-      const { data: user, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', validation.userId)
-        .single()
-
-      if (error || !user) {
-        return {
-          success: false,
-          error: 'User not found'
-        }
-      }
-
-      // Generate new tokens
-      const tokens = SessionService.generateTokens(user)
-      
-      // Store new refresh token
-      await SessionService.storeRefreshToken(user.id, tokens.refresh_token)
+      // Use the new JWT token service for refresh
+      const tokens = await jwtTokenService.refreshSession(request.refresh_token)
 
       return {
         success: true,
-        tokens
+        tokens: {
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken
+        }
       }
     } catch (error) {
       console.error('Refresh token error:', error)
       return {
         success: false,
-        error: 'Token refresh failed'
+        error: error instanceof Error ? error.message : 'Token refresh failed'
       }
     }
   }

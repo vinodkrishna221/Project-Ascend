@@ -1,6 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { SessionService } from './auth.service'
+
 import { Profile, UserRole } from './auth.types'
+import { jwtTokenService } from './jwt-token.service'
+import { supabaseAdmin } from './supabase'
 
 export interface AuthenticatedRequest extends NextApiRequest {
   user: Profile
@@ -25,20 +27,37 @@ export function withAuth(handler: (req: AuthenticatedRequest, res: NextApiRespon
       }
 
       const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-      const validation = await SessionService.validateSession(token)
+      const validation = await jwtTokenService.validateSession(token)
 
-      if (!validation.valid || !validation.user) {
+      if (!validation.isValid || !validation.payload) {
         return res.status(401).json({
           success: false,
           error: {
             code: 'INVALID_TOKEN',
-            message: 'Invalid or expired token'
+            message: validation.error || 'Invalid or expired token'
+          }
+        })
+      }
+
+      // Get full user profile from database
+      const { data: user, error } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', validation.payload.sub)
+        .single()
+
+      if (error || !user) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found'
           }
         })
       }
 
       // Add user to request object
-      ;(req as AuthenticatedRequest).user = validation.user
+      ;(req as AuthenticatedRequest).user = user
 
       return handler(req as AuthenticatedRequest, res)
     } catch (error) {
@@ -104,10 +123,19 @@ export function withOptionalAuth(handler: (req: AuthenticatedRequest, res: NextA
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7)
-        const validation = await SessionService.validateSession(token)
+        const validation = await jwtTokenService.validateSession(token)
 
-        if (validation.valid && validation.user) {
-          ;(req as AuthenticatedRequest).user = validation.user
+        if (validation.isValid && validation.payload) {
+          // Get full user profile from database
+          const { data: user, error } = await supabaseAdmin
+            .from('profiles')
+            .select('*')
+            .eq('id', validation.payload.sub)
+            .single()
+
+          if (!error && user) {
+            ;(req as AuthenticatedRequest).user = user
+          }
         }
       }
 

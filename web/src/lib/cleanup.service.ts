@@ -1,5 +1,6 @@
 import { EmailVerificationCodeService } from './email-verification.service'
-import { SessionService } from './auth.service'
+
+import { jwtTokenService } from './jwt-token.service'
 
 /**
  * Cleanup Service
@@ -45,14 +46,21 @@ export class CleanupService {
   }
 
   /**
-   * Clean up expired user sessions
+   * Clean up expired user sessions using JWT token service
    */
   private static async cleanupExpiredSessions(): Promise<number> {
     try {
-      const { data } = await supabaseAdmin
-        .rpc('cleanup_expired_user_sessions')
+      // Use the JWT token service cleanup method
+      await jwtTokenService.cleanupExpiredSessions()
+      
+      // Count how many sessions were cleaned up
+      const { count } = await supabaseAdmin
+        .from('user_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', false)
+        .lt('expires_at', new Date().toISOString())
 
-      return data || 0
+      return count || 0
     } catch (error) {
       console.error('Cleanup expired sessions error:', error)
       return 0
