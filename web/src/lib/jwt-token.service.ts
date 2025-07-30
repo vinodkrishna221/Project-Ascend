@@ -337,6 +337,18 @@ export class JWTTokenService {
   }
 
   /**
+   * Verify JWT token and return payload (for middleware use)
+   */
+  async verifyJWT(token: string): Promise<TokenPayload | null> {
+    try {
+      const decoded = jwt.verify(token, this.JWT_SECRET) as TokenPayload
+      return decoded
+    } catch (error) {
+      return null
+    }
+  }
+
+  /**
    * Get user sessions for management
    */
   async getUserSessions(userId: string): Promise<any[]> {
@@ -361,3 +373,8 @@ export class JWTTokenService {
 
 // Export singleton instance
 export const jwtTokenService = new JWTTokenService()
+
+// Export standalone function for middleware use
+export const verifyJWT = (token: string): Promise<TokenPayload | null> => {
+  return jwtTokenService.verifyJWT(token)
+}

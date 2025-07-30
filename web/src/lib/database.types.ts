@@ -248,6 +248,143 @@ export type Database = {
           }
         ]
       }
+      communities: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          category: string
+          is_public: boolean
+          created_by: string
+          moderators: string[]
+          member_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          category: string
+          is_public?: boolean
+          created_by: string
+          moderators?: string[]
+          member_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          category?: string
+          is_public?: boolean
+          created_by?: string
+          moderators?: string[]
+          member_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      community_members: {
+        Row: {
+          community_id: string
+          user_id: string
+          joined_at: string
+        }
+        Insert: {
+          community_id: string
+          user_id: string
+          joined_at?: string
+        }
+        Update: {
+          community_id?: string
+          user_id?: string
+          joined_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      posts: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          content: string
+          type: string
+          media_urls: Json
+          anonymous: boolean
+          community_id: string | null
+          guild_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          content: string
+          type?: string
+          media_urls?: Json
+          anonymous?: boolean
+          community_id?: string | null
+          guild_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          content?: string
+          type?: string
+          media_urls?: Json
+          anonymous?: boolean
+          community_id?: string | null
+          guild_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       email_verifications: {
         Row: {
           id: string
@@ -452,6 +589,13 @@ export type Database = {
         Args: {
           password: string
           hash: string
+        }
+        Returns: boolean
+      }
+      can_user_access_community: {
+        Args: {
+          user_id: string
+          community_id: string
         }
         Returns: boolean
       }
