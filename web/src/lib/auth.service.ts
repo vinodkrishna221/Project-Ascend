@@ -1,6 +1,7 @@
 import { supabase, supabaseAdmin } from './supabase'
 import * as bcrypt from 'bcryptjs'
 import * as jwt from 'jsonwebtoken'
+import { randomUUID } from 'crypto'
 import {
   EmailVerificationRequest,
   EmailVerificationResponse,
@@ -14,8 +15,7 @@ import {
   CollegeVerificationResult,
   SessionValidation,
   Profile,
-  CollegeStudentRecord,
-  VALIDATION_CONSTANTS
+  CollegeStudentRecord
 } from './auth.types'
 import { DomainValidationService } from './domain-validation.service'
 import { EmailVerificationCodeService, EmailSendingService } from './email-verification.service'
@@ -90,11 +90,12 @@ export class EmailVerificationService {
   }
 
   /**
-   * Check if email can request new verification code
+   * Check if user can request new code
    */
   static async canRequestNewCode(email: string): Promise<{
     canRequest: boolean;
     error?: string;
+    timeRemaining?: number;
     waitTime?: number;
   }> {
     return EmailVerificationCodeService.canRequestNewCode(email)
@@ -404,7 +405,7 @@ export class AuthService {
 
       // Create user account (this would typically be done through Supabase Auth)
       // For now, we'll create a profile directly
-      const userId = crypto.randomUUID()
+      const userId = randomUUID()
       
       const profileData: any = {
         id: userId,
@@ -485,7 +486,7 @@ export class AuthService {
       }
 
       // Create user account
-      const userId = crypto.randomUUID()
+      const userId = randomUUID()
       
       const profileData: any = {
         id: userId,
