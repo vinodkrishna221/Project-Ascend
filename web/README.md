@@ -2,7 +2,7 @@
 
 ## Authentication Infrastructure
 
-This directory contains the web application for Ascend with a comprehensive authentication system designed specifically for student verification and college-based access control.
+This is the web application for Ascend, a student-only social network built with Next.js 14 and Supabase with a comprehensive authentication system designed specifically for student verification and college-based access control.
 
 ### 🏗️ Architecture Overview
 
@@ -12,11 +12,79 @@ The authentication system is built on Supabase with custom verification flows fo
 - **Role-Based Access Control**: Student, Aspirant, Guild Admin, Platform Admin roles
 - **Session Management**: JWT tokens with refresh rotation
 
+## Features Implemented
+
+### Authentication System
+- **Responsive signup and login pages** with college email focus
+- **Email verification page** with enhanced form validation and resend functionality
+- **College selection page** for browsing available colleges
+- **College database verification** for colleges that don't provide email addresses
+- **Admin dashboard** for college domain and student data management
+
+### Key Components
+- Responsive design optimized for both desktop and mobile
+- Form validation using React Hook Form and Zod
+- Tailwind CSS for styling with custom design system
+- TypeScript for type safety
+- Supabase integration for authentication and database
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Supabase project
+
+### Installation
+
+1. Install dependencies:
+```bash
+cd web
+npm install
+```
+
+2. Set up environment variables:
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local` with your Supabase credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+3. Run the development server:
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
 ### 📁 Project Structure
 
 ```
 web/
 ├── src/
+│   ├── app/                    # Next.js 14 App Router
+│   │   ├── auth/              # Authentication pages
+│   │   │   ├── signup/        # Student signup
+│   │   │   ├── login/         # User login
+│   │   │   ├── verify-email/  # Email verification
+│   │   │   ├── college-selection/ # College selection
+│   │   │   ├── college-verification/ # Database verification
+│   │   │   └── verification-success/ # Success page
+│   │   ├── admin/             # Admin dashboard
+│   │   ├── api/               # API routes
+│   │   │   └── auth/          # Authentication endpoints
+│   │   ├── dashboard/         # User dashboard
+│   │   └── globals.css        # Global styles
+│   ├── components/            # Reusable components
+│   │   ├── auth/              # Authentication components
+│   │   ├── admin/             # Admin components
+│   │   └── ui/                # UI components
 │   ├── lib/
 │   │   ├── auth.service.ts      # Authentication business logic
 │   │   ├── auth.types.ts        # TypeScript types and interfaces
@@ -34,7 +102,11 @@ web/
 │   └── migrations/             # Database migrations
 ├── scripts/
 │   └── setup-auth.js          # Setup verification script
-└── README.md
+├── public/                    # Static assets
+├── package.json
+├── tailwind.config.js
+├── tsconfig.json
+└── next.config.js
 ```
 
 ### 🗄️ Database Schema
@@ -72,6 +144,36 @@ web/
 
 #### College Management
 - `GET /api/v1/colleges` - List approved colleges with filtering
+
+## Authentication Flow
+
+### Email Verification Flow
+1. User enters college email on signup
+2. System validates email domain against approved colleges
+3. Verification code sent to email
+4. User enters code to complete verification
+5. Account created and user redirected to dashboard
+
+### College Database Verification Flow
+1. User selects college without email domain
+2. User enters student credentials (name, branch, year, password)
+3. System validates against college student database
+4. Credentials marked as used to prevent duplicates
+5. Account created and user redirected to dashboard
+
+## Admin Features
+
+### College Management
+- View all colleges with filtering and search
+- Add new college domains
+- Manage email vs database verification types
+- View college statistics
+
+### Student Database Management
+- Bulk upload student data for colleges
+- Manage individual student records
+- View verification analytics
+- Handle domain requests
 
 ### 🛠️ Setup Instructions
 
@@ -140,15 +242,20 @@ curl -X POST http://localhost:3000/api/v1/auth/verify-college-credentials \
 
 ### 📝 Development Workflow
 
-#### Type Checking
-```bash
-npm run type-check
-```
+#### Available Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript checks
+- `npm run test` - Run Jest tests
+- `npm run test:watch` - Run Jest in watch mode
 
 #### Code Quality
-```bash
-npm run lint
-```
+- TypeScript strict mode enabled
+- ESLint configuration for Next.js
+- Prettier for code formatting
+- Zod for runtime validation
 
 #### Database Operations
 ```bash
@@ -195,6 +302,18 @@ The `supabase/config.toml` file contains local development settings:
 - All verification passwords are hashed with bcrypt
 - Student records are marked as used after account creation
 
+## Deployment
+
+The application is ready for deployment on Vercel, Netlify, or any platform supporting Next.js.
+
+1. Build the application:
+```bash
+npm run build
+```
+
+2. Set environment variables in your deployment platform
+3. Deploy the built application
+
 ### 📚 Additional Resources
 
 - [Supabase Documentation](https://supabase.com/docs)
@@ -209,6 +328,10 @@ The `supabase/config.toml` file contains local development settings:
 3. Include proper error handling and validation
 4. Write tests for new authentication flows
 5. Update documentation for any API changes
+6. Use TypeScript for all new code
+7. Implement proper error handling and validation
+8. Test authentication flows thoroughly
+9. Maintain responsive design principles
 
 ### 📞 Support
 
@@ -216,3 +339,7 @@ For questions about the authentication system, refer to:
 - Requirements document: `.kiro/specs/authentication-flow-spec/requirements.md`
 - Design document: `.kiro/specs/authentication-flow-spec/design.md`
 - Task list: `.kiro/specs/authentication-flow-spec/tasks.md`
+
+## License
+
+This project is part of the Ascend platform and follows the main project license.
