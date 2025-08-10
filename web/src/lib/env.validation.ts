@@ -36,6 +36,29 @@ export function validateEnvironmentVariables(): void {
   }
 
   if (missingVars.length > 0) {
+    // In development, provide default mock values
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️  Using mock environment variables for development');
+      console.warn('Missing variables:', missingVars.join(', '));
+      
+      // Set default development values
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://mock-project.supabase.co';
+      }
+      if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'mock-anon-key-for-development';
+      }
+      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock-service-role-key-for-development';
+      }
+      if (!process.env.JWT_SECRET) {
+        process.env.JWT_SECRET = 'development-jwt-secret-key-for-testing-only-must-be-at-least-32-chars';
+      }
+      
+      console.log('✅ Development environment configured with mock values');
+      return; // Continue with mock values in development
+    }
+    
     throw new Error(
       `Missing required environment variables: ${missingVars.join(', ')}\n` +
       'Please check your .env.local file and ensure all required variables are set.'

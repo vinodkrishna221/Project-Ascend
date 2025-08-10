@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { AuthService, EmailVerificationService } from '../../../../lib/auth.service'
+import { authService, EmailVerificationService } from '../../../../lib/auth.service'
 import { EmailVerificationRequest } from '../../../../lib/auth.types'
 import { validateEmail } from '../../../../lib/validation'
 
@@ -79,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const verificationStatus = await EmailVerificationService.getVerificationStatus(email)
 
     // Initiate new verification
-    const result = await AuthService.initiateEmailVerification(
+    const result = await authService.initiateEmailVerification(
       { email }, 
       ipAddress, 
       userAgent

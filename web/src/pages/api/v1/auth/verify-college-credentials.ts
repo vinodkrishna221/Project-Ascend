@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { AuthService } from '@/lib/auth.service'
+import { authService } from '@/lib/auth.service'
 import { CollegeDatabaseVerificationService } from '@/lib/college-database-verification.service'
 import { validateRequestBody } from '@/lib/validation'
 import { z } from 'zod'
@@ -120,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Attempt verification
-    const result = await AuthService.verifyCollegeCredentials(credentials)
+    const result = await authService.verifyCollegeCredentials(credentials)
 
     if (!result.success) {
       // Determine appropriate HTTP status code based on error

@@ -26,4 +26,3 @@ export const supabaseAdmin = createClient(
     }
   }
 )
->>>>>>> 2f651632066494e5b776e03e23f2149e120d5142

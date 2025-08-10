@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { AuthService } from '../../../../lib/auth.service'
+import { authService } from '../../../../lib/auth.service'
 import { RefreshTokenRequest } from '../../../../lib/auth.types'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     }
 
-    const result = await AuthService.refreshToken({ refresh_token })
+    const result = await authService.refreshToken({ refresh_token })
 
     if (!result.success) {
       return res.status(401).json({

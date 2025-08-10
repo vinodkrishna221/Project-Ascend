@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { AuthService, EmailVerificationService } from '../../../../lib/auth.service'
+import { authService, EmailVerificationService } from '../../../../lib/auth.service'
 import { VerifyCodeRequest } from '../../../../lib/auth.types'
 import { validateEmail } from '../../../../lib/validation'
 
@@ -87,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                      req.socket.remoteAddress
     const userAgent = req.headers['user-agent']
 
-    const result = await AuthService.verifyEmailCode(
+    const result = await authService.verifyEmailCode(
       { email, code }, 
       ipAddress, 
       userAgent
