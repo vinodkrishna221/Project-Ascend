@@ -12,79 +12,12 @@ The authentication system is built on Supabase with custom verification flows fo
 - **Role-Based Access Control**: Student, Aspirant, Guild Admin, Platform Admin roles
 - **Session Management**: JWT tokens with refresh rotation
 
-## Features Implemented
-
-### Authentication System
-- **Responsive signup and login pages** with college email focus
-- **Email verification page** with enhanced form validation and resend functionality
-- **College selection page** for browsing available colleges
-- **College database verification** for colleges that don't provide email addresses
-- **Admin dashboard** for college domain and student data management
-
-### Key Components
-- Responsive design optimized for both desktop and mobile
-- Form validation using React Hook Form and Zod
-- Tailwind CSS for styling with custom design system
-- TypeScript for type safety
-- Supabase integration for authentication and database
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Supabase project
-
-### Installation
-
-1. Install dependencies:
-```bash
-cd web
-npm install
-```
-
-2. Set up environment variables:
-```bash
-cp .env.local.example .env.local
-```
-
-Edit `.env.local` with your Supabase credentials:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-3. Run the development server:
-```bash
-npm run dev
-```
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### 📁 Project Structure
 
 ```
 web/
 ├── src/
-│   ├── app/                    # Next.js 14 App Router
-│   │   ├── auth/              # Authentication pages
-│   │   │   ├── signup/        # Student signup
-│   │   │   ├── login/         # User login
-│   │   │   ├── verify-email/  # Email verification
-│   │   │   ├── college-selection/ # College selection
-│   │   │   ├── college-verification/ # Database verification
-│   │   │   └── verification-success/ # Success page
-│   │   ├── admin/             # Admin dashboard
-│   │   ├── api/               # API routes
-│   │   │   └── auth/          # Authentication endpoints
-│   │   ├── dashboard/         # User dashboard
-│   │   └── globals.css        # Global styles
-│   ├── components/            # Reusable components
-│   │   ├── auth/              # Authentication components
-│   │   ├── admin/             # Admin components
-│   │   └── ui/                # UI components
 │   ├── lib/
 │   │   ├── auth.service.ts      # Authentication business logic
 │   │   ├── auth.types.ts        # TypeScript types and interfaces
@@ -339,7 +272,3 @@ For questions about the authentication system, refer to:
 - Requirements document: `.kiro/specs/authentication-flow-spec/requirements.md`
 - Design document: `.kiro/specs/authentication-flow-spec/design.md`
 - Task list: `.kiro/specs/authentication-flow-spec/tasks.md`
-
-## License
-
-This project is part of the Ascend platform and follows the main project license.
