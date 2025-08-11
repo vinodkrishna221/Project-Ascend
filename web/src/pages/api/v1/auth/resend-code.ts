@@ -61,15 +61,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Check rate limiting first
     const rateLimitCheck = await EmailVerificationService.canRequestNewCode(email)
     
-    if (!rateLimitCheck.canRequest) {
+    if (!rateLimitCheck.data?.canRequest) {
       return res.status(429).json({
         success: false,
         error: {
           code: 'RATE_LIMIT_EXCEEDED',
           message: rateLimitCheck.error || 'Rate limit exceeded',
           details: {
-            wait_time_seconds: rateLimitCheck.waitTime,
-            retry_after: rateLimitCheck.waitTime
+            wait_time_seconds: rateLimitCheck.data?.waitTime,
+            retry_after: rateLimitCheck.data?.waitTime
           }
         }
       })
@@ -79,21 +79,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const verificationStatus = await EmailVerificationService.getVerificationStatus(email)
 
     // Initiate new verification
-    const result = await authService.initiateEmailVerification(
-      { email }, 
-      ipAddress, 
-      userAgent
-    )
+    const result = await authService.initiateEmailVerification({ email })
 
     if (!result.success) {
       // Determine appropriate HTTP status code based on error type
       let statusCode = 400
       let errorCode = 'RESEND_FAILED'
 
-      if (result.error?.includes('Domain not found')) {
+      if (result.error?.message?.includes('Domain not found')) {
         statusCode = 400
         errorCode = 'UNSUPPORTED_DOMAIN'
-      } else if (result.error?.includes('inactive')) {
+      } else if (result.error?.message?.includes('inactive')) {
         statusCode = 400
         errorCode = 'INACTIVE_DOMAIN'
       }
@@ -114,7 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         verification_status: {
           has_active_code: true,
           expires_in_minutes: 15,
-          previous_code_invalidated: verificationStatus.hasActiveCode
+          previous_code_invalidated: verificationStatus.data?.hasActiveCode
         }
       },
       meta: {

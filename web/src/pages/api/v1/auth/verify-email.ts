@@ -61,24 +61,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Check current verification status
     const verificationStatus = await EmailVerificationService.getVerificationStatus(email)
     
-    const result = await authService.initiateEmailVerification(
-      { email }, 
-      ipAddress, 
-      userAgent
-    )
+    const result = await authService.initiateEmailVerification({ email })
 
     if (!result.success) {
       // Determine appropriate HTTP status code based on error type
       let statusCode = 400
       let errorCode = 'EMAIL_VERIFICATION_FAILED'
 
-      if (result.error?.includes('Rate limit') || result.error?.includes('wait')) {
+      if (result.error?.message?.includes('Rate limit') || result.error?.message?.includes('wait')) {
         statusCode = 429
         errorCode = 'RATE_LIMIT_EXCEEDED'
-      } else if (result.error?.includes('Domain not found')) {
+      } else if (result.error?.message?.includes('Domain not found')) {
         statusCode = 400
         errorCode = 'UNSUPPORTED_DOMAIN'
-      } else if (result.error?.includes('inactive')) {
+      } else if (result.error?.message?.includes('inactive')) {
         statusCode = 400
         errorCode = 'INACTIVE_DOMAIN'
       }
@@ -95,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       success: true,
       data: {
-        message: result.message,
+        message: result.data?.message,
         verification_status: {
           has_active_code: true,
           expires_in_minutes: 15

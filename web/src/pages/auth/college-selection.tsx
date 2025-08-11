@@ -305,7 +305,7 @@ const CollegeSelectionPage: React.FC = () => {
         {/* Help Section */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
-            Can't find your college?{' '}
+            Can&apos;t find your college?{' '}
             <a href="/help/college-not-found" className="text-blue-600 hover:text-blue-500">
               Request to add it
             </a>

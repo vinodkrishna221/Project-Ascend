@@ -106,7 +106,7 @@ const SignupPage: React.FC = () => {
                 Check your email
               </h2>
               <p className="mt-2 text-sm text-gray-600">
-                We've sent a verification code to <strong>{formData.email}</strong>
+                We&apos;ve sent a verification code to <strong>{formData.email}</strong>
               </p>
               <div className="mt-6">
                 <button
@@ -161,7 +161,7 @@ const SignupPage: React.FC = () => {
                     />
                     <label htmlFor="student" className="ml-3 block text-sm font-medium text-gray-700">
                       Current College Student
-                      <p className="text-gray-500 text-xs">I'm currently enrolled in college</p>
+                      <p className="text-gray-500 text-xs">I&apos;m currently enrolled in college</p>
                     </label>
                   </div>
                   <div className="flex items-center">
@@ -175,7 +175,7 @@ const SignupPage: React.FC = () => {
                     />
                     <label htmlFor="aspirant" className="ml-3 block text-sm font-medium text-gray-700">
                       College Aspirant
-                      <p className="text-gray-500 text-xs">I'm planning to join college</p>
+                      <p className="text-gray-500 text-xs">I&apos;m planning to join college</p>
                     </label>
                   </div>
                 </div>

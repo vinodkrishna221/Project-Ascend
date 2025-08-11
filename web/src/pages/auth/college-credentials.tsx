@@ -92,12 +92,12 @@ const CollegeCredentialsPage: React.FC = () => {
     setIsLoading(true);
     try {
       const result = await authService.verifyCollegeCredentials({
-        college_id: college.id,
-        student_name: formData.studentName,
+        collegeId: college.id,
+        studentName: formData.studentName,
         branch: formData.branch,
         year: formData.year,
-        roll_number: formData.rollNumber || undefined,
-        verification_password: formData.verificationPassword
+        rollNumber: formData.rollNumber || undefined,
+        verificationPassword: formData.verificationPassword
       });
 
       if (result.success) {
@@ -371,7 +371,7 @@ const CollegeCredentialsPage: React.FC = () => {
           {/* Help Section */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500">
-              Don't have your verification password?{' '}
+              Don&apos;t have your verification password?{' '}
               <Link href="/help/verification-password" className="text-blue-600 hover:text-blue-500">
                 Contact your college administration
               </Link>

@@ -87,11 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                      req.socket.remoteAddress
     const userAgent = req.headers['user-agent']
 
-    const result = await authService.verifyEmailCode(
-      { email, code }, 
-      ipAddress, 
-      userAgent
-    )
+    const result = await authService.verifyEmailCode({ email, code })
 
     if (!result.success) {
       // Determine appropriate HTTP status code and error details
@@ -99,30 +95,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let errorCode = 'CODE_VERIFICATION_FAILED'
       let errorDetails: any = undefined
 
-      if (result.error?.includes('expired')) {
+      if (result.error?.message?.includes('expired')) {
         errorCode = 'CODE_EXPIRED'
         errorDetails = {
           action: 'request_new_code',
           message: 'Please request a new verification code'
         }
-      } else if (result.error?.includes('attempts')) {
+      } else if (result.error?.message?.includes('attempts')) {
         statusCode = 429
         errorCode = 'MAX_ATTEMPTS_EXCEEDED'
         errorDetails = {
           action: 'request_new_code',
           message: 'Please request a new verification code'
         }
-      } else if (result.error?.includes('Invalid')) {
+      } else if (result.error?.message?.includes('Invalid')) {
         errorCode = 'INVALID_CODE'
         // Try to get attempts remaining info
         const status = await EmailVerificationService.getVerificationStatus(email)
-        if (status.attemptsRemaining !== undefined) {
+        if (status.data?.attemptsRemaining !== undefined) {
           errorDetails = {
-            attempts_remaining: status.attemptsRemaining,
-            message: `${status.attemptsRemaining} attempts remaining`
+            attempts_remaining: status.data.attemptsRemaining,
+            message: `${status.data.attemptsRemaining} attempts remaining`
           }
         }
-      } else if (result.error?.includes('No active')) {
+      } else if (result.error?.message?.includes('No active')) {
         errorCode = 'NO_ACTIVE_CODE'
         errorDetails = {
           action: 'request_new_code',
@@ -145,14 +141,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       data: {
         user: {
-          id: result.user!.id,
-          email: result.user!.email,
-          name: result.user!.name,
-          role: result.user!.role,
-          verification_status: result.user!.verification_status,
-          verification_method: result.user!.verification_method
+          id: result.data?.user?.id,
+          email: result.data?.user?.email,
+          name: result.data?.user?.name,
+          role: result.data?.user?.role,
+          verification_status: result.data?.user?.verification_status,
+          verification_method: result.data?.user?.verification_method
         },
-        tokens: result.tokens
+        tokens: result.data?.tokens
       },
       meta: {
         timestamp: new Date().toISOString(),

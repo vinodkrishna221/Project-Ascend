@@ -166,7 +166,7 @@ const VerifyEmailPage: React.FC = () => {
             Verify your email
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            We've sent a 6-digit code to
+            We&apos;ve sent a 6-digit code to
           </p>
           <p className="text-sm font-medium text-gray-900">{email}</p>
         </div>
@@ -246,7 +246,7 @@ const VerifyEmailPage: React.FC = () => {
           <div className="mt-6">
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Didn't receive the code?
+                Didn&apos;t receive the code?
               </p>
               <button
                 onClick={handleResendCode}

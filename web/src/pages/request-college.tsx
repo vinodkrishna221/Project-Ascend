@@ -110,7 +110,7 @@ const RequestCollegePage: React.FC = () => {
               Request Submitted!
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              Thank you for your college addition request. We'll review it and get back to you within 2-3 business days.
+              Thank you for your college addition request. We&apos;ll review it and get back to you within 2-3 business days.
             </p>
             <div className="mt-6">
               <Link
@@ -139,7 +139,7 @@ const RequestCollegePage: React.FC = () => {
             Request College Addition
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            Don't see your college in our list? Request to add it here.
+            Don&apos;t see your college in our list? Request to add it here.
           </p>
         </div>
 
@@ -219,7 +219,7 @@ const RequestCollegePage: React.FC = () => {
                         />
                         <label htmlFor="database-verification" className="ml-3 block text-sm font-medium text-gray-700">
                           Database Verification
-                          <p className="text-gray-500 text-xs">College doesn't provide email addresses</p>
+                          <p className="text-gray-500 text-xs">College doesn&apos;t provide email addresses</p>
                         </label>
                       </div>
                     </div>

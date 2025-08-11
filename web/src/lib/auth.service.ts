@@ -183,7 +183,16 @@ export const authService = {
         success: true,
         data: {
           verified: true,
-          studentId: 'mock-student-id'
+          studentId: 'mock-student-id',
+          user: {
+            id: 'mock-user-id',
+            email: `${data.studentName}@college.edu`,
+            role: 'student'
+          },
+          tokens: {
+            access_token: 'mock-access-token',
+            refresh_token: 'mock-refresh-token'
+          }
         }
       };
     } else {
@@ -195,5 +204,121 @@ export const authService = {
         }
       };
     }
+  },
+
+  async refreshToken(data: { refresh_token: string }): Promise<ApiResponse> {
+    // Mock implementation
+    console.log('Token refresh attempt');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return {
+      success: true,
+      data: {
+        tokens: {
+          access_token: 'new-mock-access-token',
+          refresh_token: 'new-mock-refresh-token'
+        }
+      }
+    };
+  },
+
+  async initiateEmailVerification(data: { email: string }): Promise<ApiResponse> {
+    // Mock implementation
+    console.log('Initiate email verification for:', data.email);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      success: true,
+      data: {
+        message: 'Verification email sent successfully'
+      }
+    };
+  },
+
+  async verifyEmailCode(data: { email: string; code: string }): Promise<ApiResponse> {
+    // Mock implementation
+    console.log('Verify email code:', data);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    if (data.code === '123456') {
+      return {
+        success: true,
+        data: {
+          verified: true,
+          needsCollegeSelection: true,
+          user: {
+            id: 'mock-user-id',
+            email: data.email,
+            name: 'Mock User',
+            role: 'student',
+            verification_status: 'verified',
+            verification_method: 'email'
+          },
+          tokens: {
+            access_token: 'mock-access-token',
+            refresh_token: 'mock-refresh-token'
+          }
+        }
+      };
+    } else {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_CODE',
+          message: 'Invalid verification code'
+        }
+      };
+    }
+  }
+};
+
+// Export EmailVerificationService for backward compatibility
+export const EmailVerificationService = {
+  async sendVerificationEmail(email: string): Promise<ApiResponse> {
+    return authService.initiateEmailVerification({ email });
+  },
+
+  async verifyCode(email: string, code: string): Promise<ApiResponse> {
+    return authService.verifyEmailCode({ email, code });
+  },
+
+  async resendCode(email: string): Promise<ApiResponse> {
+    return authService.resendVerificationCode(email);
+  },
+
+  async canRequestNewCode(email: string): Promise<ApiResponse> {
+    // Mock implementation
+    console.log('Check rate limit for:', email);
+    
+    return {
+      success: true,
+      data: {
+        canRequest: true,
+        waitTime: 0
+      }
+    };
+  },
+
+  async getVerificationStatus(email: string): Promise<ApiResponse> {
+    // Mock implementation
+    console.log('Get verification status for:', email);
+    
+    return {
+      success: true,
+      data: {
+        status: 'pending',
+        hasActiveCode: true,
+        isExpired: false,
+        isLocked: false,
+        attemptsRemaining: 3,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString()
+      }
+    };
   }
 };
