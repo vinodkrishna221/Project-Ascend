@@ -273,6 +273,7 @@ export interface SignupResponse {
 
 export interface EmailVerificationRequest {
   email: string
+  role?: 'student' | 'aspirant'
 }
 
 export interface EmailVerificationResponse {

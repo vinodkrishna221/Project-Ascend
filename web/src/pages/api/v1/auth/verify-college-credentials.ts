@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { AuthService } from '@/lib/auth.service'
+import { authService } from '@/lib/auth.service'
 import { CollegeDatabaseVerificationService } from '@/lib/college-database-verification.service'
 import { validateRequestBody } from '@/lib/validation'
 import { z } from 'zod'
@@ -120,23 +120,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Attempt verification
-    const result = await AuthService.verifyCollegeCredentials(credentials)
+    const result = await authService.verifyCollegeCredentials(credentials)
 
     if (!result.success) {
       // Determine appropriate HTTP status code based on error
       let statusCode = 400
       let errorCode = 'COLLEGE_VERIFICATION_FAILED'
 
-      if (result.error?.includes('not found')) {
+      if (result.error?.message?.includes('not found')) {
         statusCode = 404
         errorCode = 'STUDENT_NOT_FOUND'
-      } else if (result.error?.includes('Invalid verification password')) {
+      } else if (result.error?.message?.includes('Invalid verification password')) {
         statusCode = 401
         errorCode = 'INVALID_PASSWORD'
-      } else if (result.error?.includes('already been used')) {
+      } else if (result.error?.message?.includes('already been used')) {
         statusCode = 409
         errorCode = 'CREDENTIALS_ALREADY_USED'
-      } else if (result.error?.includes('expired')) {
+      } else if (result.error?.message?.includes('expired')) {
         statusCode = 410
         errorCode = 'CREDENTIALS_EXPIRED'
       }
@@ -145,7 +145,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         success: false,
         error: {
           code: errorCode,
-          message: result.error || 'College verification failed'
+          message: result.error?.message || 'College verification failed'
         }
       })
     }
@@ -153,8 +153,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       success: true,
       data: {
-        user: result.user,
-        tokens: result.tokens
+        user: result.data?.user,
+        tokens: result.data?.tokens
       },
       meta: {
         timestamp: new Date().toISOString(),

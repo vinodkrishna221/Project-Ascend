@@ -2,7 +2,7 @@
 
 ## Authentication Infrastructure
 
-This directory contains the web application for Ascend with a comprehensive authentication system designed specifically for student verification and college-based access control.
+This is the web application for Ascend, a student-only social network built with Next.js 14 and Supabase with a comprehensive authentication system designed specifically for student verification and college-based access control.
 
 ### 🏗️ Architecture Overview
 
@@ -11,6 +11,7 @@ The authentication system is built on Supabase with custom verification flows fo
 - **College Database Verification**: Alternative verification for colleges without student emails
 - **Role-Based Access Control**: Student, Aspirant, Guild Admin, Platform Admin roles
 - **Session Management**: JWT tokens with refresh rotation
+
 
 ### 📁 Project Structure
 
@@ -34,7 +35,11 @@ web/
 │   └── migrations/             # Database migrations
 ├── scripts/
 │   └── setup-auth.js          # Setup verification script
-└── README.md
+├── public/                    # Static assets
+├── package.json
+├── tailwind.config.js
+├── tsconfig.json
+└── next.config.js
 ```
 
 ### 🗄️ Database Schema
@@ -72,6 +77,36 @@ web/
 
 #### College Management
 - `GET /api/v1/colleges` - List approved colleges with filtering
+
+## Authentication Flow
+
+### Email Verification Flow
+1. User enters college email on signup
+2. System validates email domain against approved colleges
+3. Verification code sent to email
+4. User enters code to complete verification
+5. Account created and user redirected to dashboard
+
+### College Database Verification Flow
+1. User selects college without email domain
+2. User enters student credentials (name, branch, year, password)
+3. System validates against college student database
+4. Credentials marked as used to prevent duplicates
+5. Account created and user redirected to dashboard
+
+## Admin Features
+
+### College Management
+- View all colleges with filtering and search
+- Add new college domains
+- Manage email vs database verification types
+- View college statistics
+
+### Student Database Management
+- Bulk upload student data for colleges
+- Manage individual student records
+- View verification analytics
+- Handle domain requests
 
 ### 🛠️ Setup Instructions
 
@@ -140,15 +175,20 @@ curl -X POST http://localhost:3000/api/v1/auth/verify-college-credentials \
 
 ### 📝 Development Workflow
 
-#### Type Checking
-```bash
-npm run type-check
-```
+#### Available Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript checks
+- `npm run test` - Run Jest tests
+- `npm run test:watch` - Run Jest in watch mode
 
 #### Code Quality
-```bash
-npm run lint
-```
+- TypeScript strict mode enabled
+- ESLint configuration for Next.js
+- Prettier for code formatting
+- Zod for runtime validation
 
 #### Database Operations
 ```bash
@@ -195,6 +235,18 @@ The `supabase/config.toml` file contains local development settings:
 - All verification passwords are hashed with bcrypt
 - Student records are marked as used after account creation
 
+## Deployment
+
+The application is ready for deployment on Vercel, Netlify, or any platform supporting Next.js.
+
+1. Build the application:
+```bash
+npm run build
+```
+
+2. Set environment variables in your deployment platform
+3. Deploy the built application
+
 ### 📚 Additional Resources
 
 - [Supabase Documentation](https://supabase.com/docs)
@@ -209,6 +261,10 @@ The `supabase/config.toml` file contains local development settings:
 3. Include proper error handling and validation
 4. Write tests for new authentication flows
 5. Update documentation for any API changes
+6. Use TypeScript for all new code
+7. Implement proper error handling and validation
+8. Test authentication flows thoroughly
+9. Maintain responsive design principles
 
 ### 📞 Support
 

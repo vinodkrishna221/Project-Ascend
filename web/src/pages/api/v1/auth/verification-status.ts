@@ -59,8 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Calculate time remaining if code is active
     let timeRemaining: number | undefined
-    if (status.hasActiveCode && status.expiresAt) {
-      const expiresAt = new Date(status.expiresAt)
+    if (status.data?.hasActiveCode && status.data?.expiresAt) {
+      const expiresAt = new Date(status.data.expiresAt)
       const now = new Date()
       timeRemaining = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000))
     }
@@ -68,16 +68,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       success: true,
       data: {
-        has_active_code: status.hasActiveCode,
-        is_expired: status.isExpired || false,
-        is_locked: status.isLocked || false,
-        attempts_remaining: status.attemptsRemaining || 0,
-        expires_at: status.expiresAt,
+        has_active_code: status.data?.hasActiveCode,
+        is_expired: status.data?.isExpired || false,
+        is_locked: status.data?.isLocked || false,
+        attempts_remaining: status.data?.attemptsRemaining || 0,
+        expires_at: status.data?.expiresAt,
         time_remaining_seconds: timeRemaining,
-        can_request_new_code: rateLimitCheck.canRequest,
+        can_request_new_code: rateLimitCheck.data?.canRequest,
         rate_limit: {
-          can_request: rateLimitCheck.canRequest,
-          wait_time_seconds: rateLimitCheck.waitTime || 0,
+          can_request: rateLimitCheck.data?.canRequest,
+          wait_time_seconds: rateLimitCheck.data?.waitTime || 0,
           error: rateLimitCheck.error
         }
       },

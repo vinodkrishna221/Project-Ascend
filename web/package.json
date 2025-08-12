@@ -12,15 +12,20 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.1",
+    "@supabase/auth-ui-react": "^0.4.6",
+    "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.38.0",
     "@types/multer": "^2.0.0",
     "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
-    "next": "14.0.0",
+    "next": "^14.2.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "zod": "^3.22.4"
+    "react-hook-form": "^7.62.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
