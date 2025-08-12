@@ -8,13 +8,10 @@
 
 import React, { useState, useEffect } from 'react'
 import { AuthError } from '@/lib/errors'
-import { 
-  formatErrorForDisplay, 
-  createErrorToast, 
-  createErrorModal, 
+import {
+  createErrorToast,
+  createErrorModal,
   createInlineError,
-  FormattedErrorResponse,
-  FormattedRecoveryStep,
   ErrorToastData,
   ErrorModalData,
   InlineErrorData
@@ -85,15 +82,15 @@ export function ErrorToast({ error, onClose, onAction }: ErrorToastProps) {
               {toastData.actions.map((action, index) => (
                 <button
                   key={index}
+                  type="button"
                   onClick={() => {
                     action.action()
                     if (onAction) onAction(action.label)
                   }}
-                  className={`text-xs font-medium px-2 py-1 rounded ${
-                    action.primary 
-                      ? `bg-${toastData.type === 'error' ? 'red' : toastData.type === 'warning' ? 'yellow' : 'blue'}-600 text-white hover:bg-${toastData.type === 'error' ? 'red' : toastData.type === 'warning' ? 'yellow' : 'blue'}-700`
-                      : `${textColor} hover:bg-white hover:bg-opacity-20`
-                  } transition-colors`}
+                  className={`text-xs font-medium px-2 py-1 rounded ${action.primary
+                    ? `bg-${toastData.type === 'error' ? 'red' : toastData.type === 'warning' ? 'yellow' : 'blue'}-600 text-white hover:bg-${toastData.type === 'error' ? 'red' : toastData.type === 'warning' ? 'yellow' : 'blue'}-700`
+                    : `${textColor} hover:bg-white hover:bg-opacity-20`
+                    } transition-colors`}
                 >
                   {action.label}
                 </button>
@@ -102,11 +99,13 @@ export function ErrorToast({ error, onClose, onAction }: ErrorToastProps) {
           )}
         </div>
         <button
+          type="button"
           onClick={() => {
             setIsVisible(false)
             setTimeout(onClose, 300)
           }}
           className={`ml-3 flex-shrink-0 ${iconColor} hover:opacity-70 transition-opacity`}
+          aria-label="Close notification"
         >
           <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -149,7 +148,7 @@ export function ErrorModal({ error, isOpen, onClose, onRetry, onAction }: ErrorM
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
-        <div 
+        <div
           className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
           onClick={onClose}
         />
@@ -241,7 +240,7 @@ export function ErrorModal({ error, isOpen, onClose, onRetry, onAction }: ErrorM
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-500 text-center">
                 Need more help?{' '}
-                <a 
+                <a
                   href={modalData.supportInfo.contactUrl}
                   className="text-blue-600 hover:text-blue-500"
                 >
@@ -292,6 +291,7 @@ export function InlineError({ error, onAction, className = '' }: InlineErrorProp
           {errorData.recoveryAction && (
             <div className="mt-2">
               <button
+                type="button"
                 onClick={() => {
                   errorData.recoveryAction!.action()
                   if (onAction) onAction(errorData.recoveryAction!.label)
@@ -355,7 +355,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (this.props.onError && this.state.error) {
       this.props.onError(this.state.error)
     }
-    
+
     console.error('Error Boundary caught an error:', error, errorInfo)
   }
 
@@ -414,8 +414,10 @@ export function ErrorList({ errors, onDismiss, onAction, className = '' }: Error
           />
           {onDismiss && (
             <button
+              type="button"
               onClick={() => onDismiss(index)}
               className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Dismiss error"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />

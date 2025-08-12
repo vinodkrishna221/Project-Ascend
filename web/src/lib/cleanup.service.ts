@@ -1,6 +1,6 @@
 import { EmailVerificationCodeService } from './email-verification.service'
-
 import { jwtTokenService } from './jwt-token.service'
+import { supabaseAdmin } from './supabase'
 
 /**
  * Cleanup Service
@@ -83,5 +83,3 @@ export class CleanupService {
   }
 }
 
-// Import supabaseAdmin
-import { supabaseAdmin } from './supabase'
