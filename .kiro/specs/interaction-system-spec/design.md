@@ -626,14 +626,190 @@ class InteractionCacheManager {
 }
 ```
 
+### Database Schema Integration (from database-schema-spec)
+
+```sql
+-- Core interaction tables referenced from database-schema-spec
+-- post_interactions: Kudos, saves, reports with user_id, post_id, type, created_at
+-- comments: Threaded comments with parent_id, thread_level, content, is_anonymous
+-- bookmarks: User bookmarks with tags, categories, personal_notes, created_at
+-- notifications: Interaction notifications with type, data, read status
+-- interaction_analytics: Aggregated interaction metrics and trends
+```
+
+### API Endpoint Integration (from api-endpoints-spec)
+
+```typescript
+// Interaction API endpoints
+const INTERACTION_API_ENDPOINTS = {
+  // Kudos operations
+  giveKudos: 'POST /api/v1/posts/:postId/kudos',
+  removeKudos: 'DELETE /api/v1/posts/:postId/kudos',
+  getKudos: 'GET /api/v1/posts/:postId/kudos',
+  
+  // Comment operations
+  createComment: 'POST /api/v1/posts/:postId/comments',
+  replyToComment: 'POST /api/v1/comments/:commentId/replies',
+  updateComment: 'PATCH /api/v1/comments/:commentId',
+  deleteComment: 'DELETE /api/v1/comments/:commentId',
+  getComments: 'GET /api/v1/posts/:postId/comments',
+  
+  // Sharing operations
+  sharePost: 'POST /api/v1/posts/:postId/share',
+  getShareOptions: 'GET /api/v1/posts/:postId/share/options',
+  
+  // Bookmark operations
+  bookmarkPost: 'POST /api/v1/posts/:postId/bookmark',
+  removeBookmark: 'DELETE /api/v1/posts/:postId/bookmark',
+  getBookmarks: 'GET /api/v1/users/:userId/bookmarks',
+  organizeBookmarks: 'PATCH /api/v1/users/:userId/bookmarks/organize',
+  
+  // Real-time subscriptions
+  subscribeInteractions: 'WS /api/v1/posts/:postId/interactions/subscribe',
+  subscribeNotifications: 'WS /api/v1/users/:userId/notifications/subscribe'
+};
+```
+
+### Campus Confidence Animation Integration
+
+```typescript
+// Campus Confidence celebration animations for interactions
+const INTERACTION_CELEBRATIONS = {
+  firstKudos: {
+    animation: 'confettiCelebration',
+    duration: 2000,
+    colors: ['var(--warm-coral)', 'var(--success-green)', 'var(--ascend-blue)'],
+    message: 'Amazing! You gave your first kudos! 🎉',
+    hapticPattern: [50, 100, 50]
+  },
+  
+  helpfulComment: {
+    animation: 'sparkleGlow',
+    duration: 1500,
+    colors: ['var(--gentle-purple)', 'var(--confidence-teal)'],
+    message: 'Your helpful comment is making a difference! ✨',
+    hapticPattern: [30, 50, 30]
+  },
+  
+  crossCollegeInteraction: {
+    animation: 'bridgeGlow',
+    duration: 3000,
+    colors: ['var(--confidence-teal)', 'var(--warm-coral)'],
+    message: 'You\'re building bridges across colleges! 🌉',
+    hapticPattern: [40, 80, 40]
+  },
+  
+  skillEndorsement: {
+    animation: 'skillBadgePulse',
+    duration: 2500,
+    colors: ['var(--success-green)', 'var(--ascend-blue)'],
+    message: 'Skill endorsed! Your expertise is recognized! 🏆',
+    hapticPattern: [60, 120, 60]
+  }
+};
+
+// Campus Confidence micro-interactions
+const INTERACTION_MICRO_ANIMATIONS = {
+  kudosButton: {
+    hover: 'scale(1.05) rotate(5deg)',
+    active: 'scale(0.95) rotate(-5deg)',
+    success: 'heartBeat 0.6s ease-in-out'
+  },
+  
+  commentButton: {
+    hover: 'translateY(-2px)',
+    active: 'translateY(0px)',
+    typing: 'pulse 1.5s infinite'
+  },
+  
+  shareButton: {
+    hover: 'rotate(15deg)',
+    active: 'rotate(-15deg)',
+    success: 'shareRipple 0.8s ease-out'
+  },
+  
+  bookmarkButton: {
+    hover: 'scale(1.1)',
+    active: 'scale(0.9)',
+    success: 'bookmarkFill 0.4s ease-in-out'
+  }
+};
+```
+
+### Campus Confidence Animation Integration
+
+```typescript
+// Campus Confidence celebration animations for interactions
+const INTERACTION_CELEBRATIONS = {
+  firstKudos: {
+    animation: 'confettiCelebration',
+    duration: 2000,
+    colors: ['var(--warm-coral)', 'var(--success-green)', 'var(--ascend-blue)'],
+    message: 'Amazing! You gave your first kudos! 🎉',
+    hapticPattern: [50, 100, 50]
+  },
+  
+  helpfulComment: {
+    animation: 'sparkleGlow',
+    duration: 1500,
+    colors: ['var(--gentle-purple)', 'var(--confidence-teal)'],
+    message: 'Your helpful comment is making a difference! ✨',
+    hapticPattern: [30, 50, 30]
+  },
+  
+  crossCollegeInteraction: {
+    animation: 'bridgeGlow',
+    duration: 3000,
+    colors: ['var(--confidence-teal)', 'var(--warm-coral)'],
+    message: 'You\'re building bridges across colleges! 🌉',
+    hapticPattern: [40, 80, 40]
+  },
+  
+  skillEndorsement: {
+    animation: 'skillBadgePulse',
+    duration: 2500,
+    colors: ['var(--success-green)', 'var(--ascend-blue)'],
+    message: 'Skill endorsed! Your expertise is recognized! 🏆',
+    hapticPattern: [60, 120, 60]
+  }
+};
+
+// Campus Confidence micro-interactions
+const INTERACTION_MICRO_ANIMATIONS = {
+  kudosButton: {
+    hover: 'scale(1.05) rotate(5deg)',
+    active: 'scale(0.95) rotate(-5deg)',
+    success: 'heartBeat 0.6s ease-in-out'
+  },
+  
+  commentButton: {
+    hover: 'translateY(-2px)',
+    active: 'translateY(0px)',
+    typing: 'pulse 1.5s infinite'
+  },
+  
+  shareButton: {
+    hover: 'rotate(15deg)',
+    active: 'rotate(-15deg)',
+    success: 'shareRipple 0.8s ease-out'
+  },
+  
+  bookmarkButton: {
+    hover: 'scale(1.1)',
+    active: 'scale(0.9)',
+    success: 'bookmarkFill 0.4s ease-in-out'
+  }
+};
+```
+
 ### Database Optimization
 ```sql
--- Optimized indexes for interaction queries
-CREATE INDEX idx_interactions_post_id_created_at ON interactions(post_id, created_at DESC);
-CREATE INDEX idx_interactions_user_id_type ON interactions(user_id, type);
-CREATE INDEX idx_comments_thread_level ON comments(post_id, thread_level, parent_id);
-CREATE INDEX idx_bookmarks_user_tags ON bookmarks(user_id, tags) USING GIN;
-CREATE INDEX idx_kudos_type_created_at ON kudos(type, created_at DESC);
+-- Optimized indexes for interaction queries (references database-schema-spec)
+CREATE INDEX idx_post_interactions_post_id_created_at ON post_interactions(post_id, created_at DESC);
+CREATE INDEX idx_post_interactions_user_id_type ON post_interactions(user_id, type);
+CREATE INDEX idx_comments_post_id_thread_level ON comments(post_id, thread_level, parent_id);
+CREATE INDEX idx_bookmarks_user_id_tags ON bookmarks(user_id, tags) USING GIN;
+CREATE INDEX idx_notifications_user_id_read ON notifications(user_id, read, created_at DESC);
 
 -- Materialized view for interaction analytics
 CREATE MATERIALIZED VIEW interaction_analytics AS

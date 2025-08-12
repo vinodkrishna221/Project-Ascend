@@ -50,6 +50,50 @@ graph LR
     E --> M[UploadProgress]
 ```
 
+### Database Schema Integration (from database-schema-spec)
+
+```sql
+-- Core post creation tables referenced from database-schema-spec
+-- posts: Main content table with id, user_id, type, title, content, labels, media_urls
+-- post_labels: User-generated labels with post_id, label, category, usage_count
+-- post_media: Media attachments with post_id, media_url, media_type, file_size
+-- post_drafts: Draft storage with user_id, content, labels, auto_save_timestamp
+-- communities: Community context with id, name, suggested_labels
+-- moderation_queue: Content review with post_id, status, flags, reviewer_notes
+```
+
+### API Endpoint Integration (from api-endpoints-spec)
+
+```typescript
+// Post creation API endpoints
+const POST_CREATION_API_ENDPOINTS = {
+  // Post operations
+  createPost: 'POST /api/v1/posts',
+  updatePost: 'PATCH /api/v1/posts/:postId',
+  deletePost: 'DELETE /api/v1/posts/:postId',
+  getPost: 'GET /api/v1/posts/:postId',
+  
+  // Draft operations
+  saveDraft: 'POST /api/v1/posts/drafts',
+  getDrafts: 'GET /api/v1/users/:userId/drafts',
+  deleteDraft: 'DELETE /api/v1/posts/drafts/:draftId',
+  
+  // Label operations
+  suggestLabels: 'GET /api/v1/posts/labels/suggestions',
+  getCommunityLabels: 'GET /api/v1/communities/:communityId/labels',
+  createLabel: 'POST /api/v1/posts/labels',
+  
+  // Media operations
+  uploadMedia: 'POST /api/v1/posts/media/upload',
+  processMedia: 'POST /api/v1/posts/media/process',
+  deleteMedia: 'DELETE /api/v1/posts/media/:mediaId',
+  
+  // Moderation operations
+  submitForReview: 'POST /api/v1/posts/:postId/moderate',
+  getModerationStatus: 'GET /api/v1/posts/:postId/moderation'
+};
+```
+
 ## Components and Interfaces
 
 ### Core Components
@@ -202,6 +246,120 @@ interface LabelAnalytics {
   lastUsed: Date;
   createdAt: Date;
 }
+```
+
+### Campus Confidence Button States and Celebrations
+
+```typescript
+// Campus Confidence button states for post creation
+const POST_CREATION_BUTTON_STATES = {
+  publishButton: {
+    default: {
+      background: 'linear-gradient(135deg, var(--ascend-blue) 0%, var(--ascend-blue-light) 100%)',
+      color: 'white',
+      text: 'Share Your Post',
+      animation: 'none'
+    },
+    hover: {
+      background: 'linear-gradient(135deg, var(--ascend-blue-dark) 0%, var(--ascend-blue) 100%)',
+      transform: 'translateY(-1px)',
+      boxShadow: '0 4px 8px rgba(37, 99, 235, 0.2)'
+    },
+    loading: {
+      background: 'linear-gradient(135deg, var(--calm-gray) 0%, var(--calm-gray-light) 100%)',
+      text: 'Preparing your awesome post...',
+      animation: 'loadingShimmer 1.5s infinite'
+    },
+    success: {
+      background: 'linear-gradient(135deg, var(--success-green) 0%, var(--success-green-light) 100%)',
+      text: 'Post Shared! ✨',
+      animation: 'successPulse 0.6s ease-out'
+    }
+  },
+  
+  saveDraftButton: {
+    default: {
+      background: 'transparent',
+      color: 'var(--calm-gray)',
+      border: '2px solid var(--calm-gray)',
+      text: 'Save Draft'
+    },
+    hover: {
+      background: 'var(--calm-gray-50)',
+      color: 'var(--calm-gray-dark)'
+    },
+    success: {
+      color: 'var(--success-green)',
+      border: '2px solid var(--success-green)',
+      text: 'Draft Saved! 💾'
+    }
+  }
+};
+
+// Campus Confidence celebration animations for post creation
+const POST_CREATION_CELEBRATIONS = {
+  firstPost: {
+    trigger: 'user_first_post',
+    animation: 'confettiExplosion',
+    duration: 3000,
+    colors: ['var(--warm-coral)', 'var(--success-green)', 'var(--ascend-blue)', 'var(--gentle-purple)'],
+    message: 'Congratulations on your first post! 🎉 You\'re building your academic journey!',
+    hapticPattern: [100, 200, 100, 200, 100]
+  },
+  
+  postPublished: {
+    trigger: 'post_published',
+    animation: 'sparkleRain',
+    duration: 2000,
+    colors: ['var(--confidence-teal)', 'var(--warm-coral)'],
+    message: 'Your post is live! Your community will love it! ✨',
+    hapticPattern: [50, 100, 50]
+  },
+  
+  vulnerableSharing: {
+    trigger: 'anonymous_post_published',
+    animation: 'supportiveGlow',
+    duration: 2500,
+    colors: ['var(--safety-blue)', 'var(--gentle-purple)'],
+    message: 'Thank you for sharing authentically. Your voice matters! 💙',
+    hapticPattern: [30, 60, 30]
+  },
+  
+  crossCommunityPost: {
+    trigger: 'multi_community_post',
+    animation: 'bridgeConnect',
+    duration: 2000,
+    colors: ['var(--confidence-teal)', 'var(--ascend-blue)'],
+    message: 'You\'re connecting communities! Building bridges! 🌉',
+    hapticPattern: [40, 80, 40]
+  }
+};
+
+// Campus Confidence micro-interactions for post creation UI
+const POST_CREATION_MICRO_INTERACTIONS = {
+  labelInput: {
+    focus: 'borderGlow 0.3s ease-in-out',
+    typing: 'labelSuggestionPulse 1s infinite',
+    labelAdded: 'labelPopIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+  },
+  
+  mediaUpload: {
+    dragOver: 'uploadZonePulse 0.5s ease-in-out',
+    uploading: 'progressFill 0.3s ease-out',
+    success: 'checkmarkDraw 0.5s ease-in-out'
+  },
+  
+  anonymousToggle: {
+    toggle: 'maskSlide 0.4s ease-in-out',
+    enabled: 'privacyShield 0.6s ease-in-out'
+  },
+  
+  contentEditor: {
+    focus: 'editorExpand 0.3s ease-out',
+    typing: 'encouragingPulse 2s infinite',
+    milestone: 'wordCountCelebration 0.5s ease-in-out' // At 50, 100, 200 words
+  }
+};
 ```
 
 ## User Experience Design

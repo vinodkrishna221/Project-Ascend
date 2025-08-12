@@ -122,6 +122,7 @@ This document outlines all the specification files needed to build Ascend, a stu
   - **Events**: Workshop and event management with RSVP tracking
   - **Institutional Memory**: Knowledge preservation across council transitions
   - **Campus Confidence Integration**: Official verification badges, celebration of participation
+  - **Anonymous posting**: anonymously users can ask questions in the guild
 
 #### 3.3 Content Moderation
 **Priority: HIGH**

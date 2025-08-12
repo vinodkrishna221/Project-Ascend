@@ -85,6 +85,25 @@ interface FeedResponse {
   nextCursor: string;
   metadata: FeedMetadata;
 }
+
+// API Endpoint Mappings (from api-endpoints-spec)
+const FEED_API_ENDPOINTS = {
+  generateFeed: 'GET /api/v1/feed',
+  refreshFeed: 'POST /api/v1/feed/refresh',
+  realtimeUpdates: 'GET /api/v1/feed/realtime',
+  feedAnalytics: 'GET /api/v1/feed/analytics'
+};
+
+// Database Table References (from database-schema-spec)
+const FEED_DATABASE_TABLES = {
+  posts: 'posts',
+  userInterests: 'user_interests',
+  feedAnalytics: 'feed_analytics',
+  contentQualityMetrics: 'content_quality_metrics',
+  feedCache: 'feed_cache',
+  communityMembers: 'community_members',
+  profiles: 'profiles'
+};
 ```
 
 #### 2. Personalization Engine
@@ -749,6 +768,94 @@ class PerformanceOptimizedRanker {
     
     return rankedPosts;
   }
+}
+```
+
+## Database Schema Integration
+
+### Feed-Specific Database Tables
+The feed algorithm integrates with the following database tables (defined in database-schema-spec):
+
+```sql
+-- Core tables used by feed algorithm
+-- posts: Main content table with type, labels, community_id
+-- profiles: User information and preferences
+-- community_members: User-community relationships
+-- user_interests: Personalization data storage
+-- feed_analytics: Feed interaction tracking
+-- content_quality_metrics: Post quality scoring data
+-- feed_cache: Pre-computed feed results storage
+```
+
+### Database Optimization
+```sql
+-- Feed-specific database indexes (references database-schema-spec)
+CREATE INDEX idx_posts_created_at_desc ON posts(created_at DESC);
+CREATE INDEX idx_posts_community_id_created_at ON posts(community_id, created_at DESC);
+CREATE INDEX idx_posts_author_id_created_at ON posts(author_id, created_at DESC);
+CREATE INDEX idx_posts_type_created_at ON posts(type, created_at DESC);
+
+-- User interests and personalization indexes
+CREATE INDEX idx_user_interests_user_id ON user_interests(user_id);
+CREATE INDEX idx_user_interests_skill_weight ON user_interests(skill, weight DESC);
+CREATE INDEX idx_community_members_user_id ON community_members(user_id);
+CREATE INDEX idx_community_members_community_id ON community_members(community_id);
+
+-- Feed analytics and quality metrics indexes
+CREATE INDEX idx_feed_analytics_user_id_date ON feed_analytics(user_id, date DESC);
+CREATE INDEX idx_content_quality_metrics_post_id ON content_quality_metrics(post_id);
+CREATE INDEX idx_feed_cache_user_id_expires_at ON feed_cache(user_id, expires_at DESC);
+
+-- Full-text search for content discovery
+CREATE INDEX idx_posts_content_search ON posts USING gin(to_tsvector('english', title || ' ' || content));
+CREATE INDEX idx_posts_labels_search ON posts USING gin(labels);
+
+-- Materialized view for feed performance analytics
+CREATE MATERIALIZED VIEW feed_performance_analytics AS
+SELECT 
+  user_id,
+  DATE_TRUNC('day', created_at) as date,
+  COUNT(*) as posts_viewed,
+  COUNT(*) FILTER (WHERE interaction_type = 'kudos') as kudos_given,
+  COUNT(*) FILTER (WHERE interaction_type = 'comment') as comments_posted,
+  COUNT(*) FILTER (WHERE interaction_type = 'share') as posts_shared,
+  COUNT(*) FILTER (WHERE interaction_type = 'bookmark') as posts_bookmarked,
+  AVG(time_spent_viewing) as avg_viewing_time
+FROM feed_analytics
+GROUP BY user_id, DATE_TRUNC('day', created_at);
+```
+
+### Campus Confidence UI Integration
+
+The feed algorithm integrates with Campus Confidence design system components:
+
+```typescript
+// Campus Confidence color integration for feed elements
+const FEED_UI_COLORS = {
+  winPosts: 'var(--success-green)', // #059669 - Win post indicators
+  projectPosts: 'var(--ascend-blue)', // #2563EB - Project post indicators  
+  questionPosts: 'var(--soft-amber)', // #F59E0B - Question post indicators
+  encouragingContent: 'var(--warm-coral)', // #F97316 - Confidence-building highlights
+  diversityBoost: 'var(--confidence-teal)', // #0891B2 - Cross-college content
+  qualityIndicator: 'var(--gentle-purple)' // #7C3AED - High-quality content
+};
+
+// Campus Confidence animation integration
+const FEED_ANIMATIONS = {
+  newContentAppear: 'slideInFromTop 0.3s ease-out',
+  qualityBoost: 'sparkleGlow 0.6s ease-in-out',
+  diversityHighlight: 'crossCollegePulse 0.8s ease-in-out',
+  confidenceBoost: 'encouragingGlow 1.0s ease-in-out',
+  loadingState: 'skeletonShimmer 1.5s infinite'
+};
+
+// Campus Confidence micro-interactions for feed
+interface FeedMicroInteractions {
+  qualityContentHighlight: 'Subtle sparkle animation for high-quality posts';
+  crossCollegeIndicator: 'Bridge icon animation for diverse content';
+  confidenceBuildingGlow: 'Warm glow for encouraging content';
+  firstTimeContentCelebration: 'Confetti animation for first-time posters';
+  skillMatchIndicator: 'Skill tag pulse for relevant content';
 }
 ```
 

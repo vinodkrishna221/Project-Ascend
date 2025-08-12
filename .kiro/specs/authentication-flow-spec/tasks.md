@@ -1,36 +1,37 @@
 # Implementation Plan
 
 - [x] 1. Set up authentication infrastructure and database schema
-
-
-
-
   - Create Supabase project configuration with authentication enabled
-  - Implement database migrations for authentication tables (profiles, college_domains, college_student_database, email_verifications, user_sessions)
+  - Implement database migrations for authentication tables (references database-schema-spec):
+    - `profiles` table: User profiles extending auth.users with college_id, verification_status
+    - `college_domains` table: Approved college domains with verification_type
+    - `college_student_database` table: Student records for non-email verification
+    - `email_verifications` table: Verification codes with expiration and attempt tracking
+    - `user_sessions` table: Session management with device tracking
   - Set up Row Level Security (RLS) policies for secure data access
   - Configure custom user roles and verification status enums
+  - API endpoints (references api-endpoints-spec): POST /api/v1/auth/setup, GET /api/v1/auth/config
   - _Requirements: 1.1, 2.1, 3.3, 5.1, 6.1_
 
 - [x] 2. Implement core email verification system
   - [x] 2.1 Create email domain validation service
-
-
-    - Build domain validation logic against approved college domains list
+    - Build domain validation logic against `college_domains` table from database-schema-spec
     - Implement automatic and manual domain verification workflows
-    - Create domain management API endpoints for administrators
+    - Create domain management API endpoints (references api-endpoints-spec):
+      - GET /api/v1/auth/domains - List approved domains
+      - POST /api/v1/auth/domains/validate - Validate email domain
+      - POST /api/v1/admin/domains - Add new domain (admin only)
     - Add support for international college domains with manual review
     - _Requirements: 1.1, 2.1, 2.2, 2.4_
 
   - [ ] 2.2 Build email verification code system
-
-
-
-
-
-    - Implement secure verification code generation and storage
+    - Implement secure verification code generation and storage in `email_verifications` table
     - Create email sending service integration with transactional email provider
-    - Build code validation logic with attempt limiting and expiration
-    - Add automatic cleanup of expired verification codes
+    - Build code validation logic with attempt limiting and expiration tracking
+    - Add automatic cleanup of expired verification codes via database triggers
+    - API endpoints (references api-endpoints-spec):
+      - POST /api/v1/auth/send-verification - Send verification email
+      - POST /api/v1/auth/verify-email - Verify email with code
     - _Requirements: 1.2, 1.3, 1.5, 1.6_
 
   - [x] 2.3 Create email verification API endpoints
@@ -38,14 +39,19 @@
     - Implement POST /api/v1/auth/verify-code endpoint for code validation
     - Create POST /api/v1/auth/resend-code endpoint with rate limiting
     - Add comprehensive error handling with user-friendly messages
+    - Integrate with security-privacy-spec requirements for rate limiting and audit logging
     - _Requirements: 1.2, 1.3, 1.4, 4.1, 4.5_
 
 - [x] 3. Implement college database verification system (MVP: Supabase-managed)
   - [x] 3.1 Create MVP college student database in Supabase
-    - Build college student database schema in Supabase with secure password hashing
+    - Build `college_student_database` table schema with secure bcrypt password hashing
     - Implement Ascend admin interface for bulk upload of college student data
-    - Create student record management with expiration handling in Supabase
+    - Create student record management with expiration handling via `expires_at` field
     - Add Ascend admin authentication for college data management (MVP approach)
+    - API endpoints (references api-endpoints-spec):
+      - POST /api/v1/admin/colleges/:id/students/bulk - Bulk upload students
+      - GET /api/v1/colleges/:id/students/verify - Verify student credentials
+    - Align with security-privacy-spec for data encryption and access controls
     - _Requirements: 3.2, 3.5, 2.1_
 
   - [x] 3.2 Build college database verification service (MVP)
