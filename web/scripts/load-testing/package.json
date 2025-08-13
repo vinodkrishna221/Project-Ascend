@@ -1,0 +1,33 @@
+{
+  "name": "ascend-performance-testing",
+  "version": "1.0.0",
+  "description": "Performance and load testing suite for Ascend authentication flow",
+  "scripts": {
+    "test:performance": "k6 run --env BASE_URL=http://localhost:3000 performance-benchmarks.js",
+    "test:load": "k6 run --env BASE_URL=http://localhost:3000 auth-load-test.js",
+    "test:scalability": "k6 run --env BASE_URL=http://localhost:3000 scalability-test.js",
+    "test:stress": "k6 run --env BASE_URL=http://localhost:3000 stress-test.js",
+    "test:quick": "k6 run --env BASE_URL=http://localhost:3000 --env TEST_TYPE=auth_endpoints --duration 2m --vus 10 performance-benchmarks.js",
+    "test:all": "npm run test:performance && npm run test:load && npm run test:scalability && npm run test:stress",
+    "install-k6": "echo 'Please install K6 from https://k6.io/docs/getting-started/installation/'",
+    "setup": "npm run install-k6 && mkdir -p load-testing-results"
+  },
+  "keywords": [
+    "performance",
+    "load-testing",
+    "k6",
+    "authentication",
+    "scalability",
+    "stress-testing"
+  ],
+  "devDependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ascend/authentication-flow"
+  },
+  "author": "Ascend Team",
+  "license": "MIT"
+}
