@@ -1,0 +1,137 @@
+# Prometheus Alert Rules for Ascend Authentication System
+
+groups:
+  - name: ascend_auth_alerts
+    rules:
+      # Application Health Alerts
+      - alert: ApplicationDown
+        expr: up{job="nextjs-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ascend Authentication application is down"
+          description: "The Next.js application has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second."
+
+      # Authentication Specific Alerts
+      - alert: AuthenticationFailureSpike
+        expr: rate(auth_failures_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failures are at {{ $value }} per second, which may indicate an attack."
+
+      - alert: EmailVerificationBacklog
+        expr: email_verification_queue_size > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Email verification queue is backing up"
+          description: "There are {{ $value }} pending email verifications."
+
+      # Performance Alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time"
+          description: "95th percentile response time is {{ $value }} seconds."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 90%."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80%."
+
+      # Database Alerts
+      - alert: DatabaseConnectionsHigh
+        expr: supabase_active_connections > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connection count"
+          description: "Database has {{ $value }} active connections."
+
+      - alert: SlowQueries
+        expr: supabase_slow_queries_total > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "{{ $value }} slow queries detected in the last minute."
+
+      # Security Alerts
+      - alert: SuspiciousActivity
+        expr: rate(security_events_total{type="suspicious"}[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Suspicious security activity detected"
+          description: "{{ $value }} suspicious security events per second."
+
+      - alert: RateLimitExceeded
+        expr: rate(rate_limit_exceeded_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limits being exceeded frequently"
+          description: "Rate limits exceeded {{ $value }} times per second."
+
+      # Storage Alerts
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is below 10%."
+
+      # Redis Alerts (if using Redis)
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache server is not responding."
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis memory usage is above 90%."
