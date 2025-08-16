@@ -13,7 +13,7 @@ import { EmailVerificationCodeService, EmailSendingService } from '../../../../l
 import { DomainValidationService } from '../../../../lib/domain-validation.service';
 import { verificationRateLimit } from '../../../../lib/rate-limit.middleware';
 import { securityMonitoringService } from '../../../../lib/security-monitoring.service';
-import { trackAuthAttempt } from '../../../../lib/metrics.middleware';
+
 
 const domainValidationService = new DomainValidationService();
 
@@ -105,19 +105,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Validate email domain
     const domainValidation = await DomainValidationService.validateDomain(normalizedEmail);
     if (!domainValidation.isValid) {
-      // Track failed domain validation
-      await trackAuthAttempt(
-        'email_verification',
-        'email',
-        false,
-        Date.now() - startTime,
-        undefined,
-        domainValidation.college?.id,
-        'INVALID_EMAIL_DOMAIN',
-        domainValidation.reason || 'Email domain is not from a recognized college',
-        ipAddress,
-        userAgent
-      );
 
       return res.status(400).json({
         success: false,
@@ -164,19 +151,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!emailResult.success) {
       console.error('Failed to send verification email:', emailResult.error);
       
-      // Track failed email sending
-      await trackAuthAttempt(
-        'email_verification',
-        'email',
-        false,
-        Date.now() - startTime,
-        undefined,
-        domainValidation.college?.id,
-        'EMAIL_SEND_FAILED',
-        'Failed to send verification email',
-        ipAddress,
-        userAgent
-      );
       
       // Log email sending failure
       await securityMonitoringService.logSecurityEvent({
@@ -202,19 +176,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    // Track successful verification code sending
-    await trackAuthAttempt(
-      'email_verification',
-      'email',
-      true,
-      Date.now() - startTime,
-      undefined,
-      domainValidation.college?.id,
-      undefined,
-      undefined,
-      ipAddress,
-      userAgent
-    );
 
     // Log successful verification code generation
     await securityMonitoringService.logSecurityEvent({
@@ -244,19 +205,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   } catch (error) {
     console.error('Send verification API error:', error);
     
-    // Track internal server error
-    await trackAuthAttempt(
-      'email_verification',
-      'email',
-      false,
-      Date.now() - startTime,
-      undefined,
-      undefined,
-      'INTERNAL_SERVER_ERROR',
-      error instanceof Error ? error.message : 'Internal server error',
-      ipAddress,
-      userAgent
-    );
 
     return res.status(500).json({
       success: false,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NextPage } from 'next';
 import Head from 'next/head';
 
@@ -81,7 +81,7 @@ const MonitoringDashboard: NextPage = () => {
   const [timeWindow, setTimeWindow] = useState(24);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/v1/analytics/dashboard?timeWindow=${timeWindow}`);
@@ -104,7 +104,7 @@ const MonitoringDashboard: NextPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeWindow]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -112,7 +112,7 @@ const MonitoringDashboard: NextPage = () => {
     // Auto-refresh every 5 minutes
     const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [timeWindow]);
+  }, [timeWindow, fetchDashboardData]);
 
   const getHealthColor = (health: string) => {
     switch (health) {

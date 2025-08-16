@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -33,14 +33,7 @@ const CollegeCredentialsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCollege, setIsLoadingCollege] = useState(true);
 
-  // Load college information
-  useEffect(() => {
-    if (collegeId) {
-      loadCollege();
-    }
-  }, [collegeId]);
-
-  const loadCollege = async () => {
+  const loadCollege = useCallback(async () => {
     try {
       const result = await authService.getColleges();
       if (result.success) {
@@ -58,7 +51,14 @@ const CollegeCredentialsPage: React.FC = () => {
     } finally {
       setIsLoadingCollege(false);
     }
-  };
+  }, [collegeId]);
+
+  // Load college information
+  useEffect(() => {
+    if (collegeId) {
+      loadCollege();
+    }
+  }, [collegeId, loadCollege]);
 
   const validateForm = (): boolean => {
     const newErrors: {[key: string]: string} = {};

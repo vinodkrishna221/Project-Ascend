@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -27,7 +27,7 @@ const VerifyEmailPage: React.FC = () => {
     }
   }, [resendCooldown]);
 
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const newErrors: { code?: string } = {};
 
     if (!formData.code.trim()) {
@@ -40,9 +40,9 @@ const VerifyEmailPage: React.FC = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData.code]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     
@@ -83,9 +83,9 @@ const VerifyEmailPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [formData.code, router, email, validateForm]);
 
-  const handleResendCode = async () => {
+  const handleResendCode = useCallback(async () => {
     if (resendCooldown > 0 || !email) return;
 
     setIsResending(true);
@@ -107,9 +107,9 @@ const VerifyEmailPage: React.FC = () => {
     } finally {
       setIsResending(false);
     }
-  };
+  }, [resendCooldown, email]);
 
-  const handleInputChange = (value: string) => {
+  const handleInputChange = useCallback((value: string) => {
     // Only allow numeric input and limit to 6 characters
     const numericValue = value.replace(/\D/g, '').slice(0, 6);
     setFormData({ code: numericValue });
@@ -120,14 +120,14 @@ const VerifyEmailPage: React.FC = () => {
     if (errors.general) {
       setErrors(prev => ({ ...prev, general: undefined }));
     }
-  };
+  }, [errors.code, errors.general]);
 
   // Auto-submit when 6 digits are entered
   useEffect(() => {
     if (formData.code.length === 6 && !isLoading) {
       handleSubmit(new Event('submit') as any);
     }
-  }, [formData.code]);
+  }, [formData.code, handleSubmit, isLoading]);
 
   if (!email) {
     return (
